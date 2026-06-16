@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 function LoginForm({ onSubmit, formData, onChange }) {
     return (
         <form className="auth-form" onSubmit={onSubmit}>
@@ -15,7 +17,7 @@ function LoginForm({ onSubmit, formData, onChange }) {
                     <input type="checkbox" name="remember" checked={formData.remember} onChange={onChange} />
                     Remember me
                 </label>
-                <a href="#" className="auth-link">Forgot Password?</a>
+                <Link to="/forgot-password" className="auth-link">Forgot Password?</Link>
             </div>
 
             <button type="submit" className="button button-primary">Login</button>

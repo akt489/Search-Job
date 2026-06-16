@@ -16,6 +16,7 @@ import ApplicationHistory from './pages/ApplicationHistory';
 import ApplyJob from './pages/ApplyJob';
 import FindCompany from './pages/FindCompany';
 import PostCV from './pages/PostCV';
+import ForgotPassword from './pages/ForgotPassword';
 
 import './App.css';
 
@@ -24,7 +25,11 @@ function App() {
 
   const [savedJobs, setSavedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const storedUser = window.localStorage.getItem('jobscout-user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [token, setToken] = useState(() => window.localStorage.getItem('jobscout-token') || null);
 
   const [theme, setTheme] = useState(() => {
     const stored = window.localStorage.getItem('jobscout-theme');
@@ -44,8 +49,19 @@ function App() {
     );
   };
 
-  const handleLogin = (profile) => setUser(profile);
-  const handleRegister = (profile) => setUser(profile);
+  const handleLogin = (profile, authToken) => {
+    setUser(profile);
+    setToken(authToken);
+    window.localStorage.setItem('jobscout-user', JSON.stringify(profile));
+    window.localStorage.setItem('jobscout-token', authToken);
+  };
+
+  const handleRegister = (profile, authToken) => {
+    setUser(profile);
+    setToken(authToken);
+    window.localStorage.setItem('jobscout-user', JSON.stringify(profile));
+    window.localStorage.setItem('jobscout-token', authToken);
+  };
 
   const handleApplicationSubmit = (applicationData) => {
     setApplications((prev) => [...prev, applicationData]);
@@ -61,6 +77,9 @@ function App() {
         user={user}
         onLogout={() => {
           setUser(null);
+          setToken(null);
+          window.localStorage.removeItem('jobscout-user');
+          window.localStorage.removeItem('jobscout-token');
           navigate('/');
         }}
         savedCount={savedJobs.length}
@@ -113,25 +132,15 @@ function App() {
           <Route path="/companies" element={<FindCompany />} />
 
           <Route
-            path="/history"
-            element={
-              <ProtectedRoute user={user}>
-                <ApplicationHistory applications={applications} />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route path="/applications" element={<Navigate to="/history" replace />} />
-
-          <Route
             path="/post-cv"
             element={
               <ProtectedRoute user={user}>
-                <PostCV user={user} />
+                <PostCV user={user} token={token} />
               </ProtectedRoute>
             }
           />
 
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/postcv" element={<Navigate to="/post-cv" replace />} />
 
           <Route

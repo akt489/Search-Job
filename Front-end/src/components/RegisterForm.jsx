@@ -19,6 +19,7 @@ function RegisterForm({ onSubmit, formData, onChange, errors }) {
             <label htmlFor="confirmPassword">Confirm Password</label>
             <input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={onChange} placeholder="••••••••" required />
             {errors.confirmPassword && <p className="field-error">{errors.confirmPassword}</p>}
+            {errors.form && <p className="field-error">{errors.form}</p>}
 
             <button type="submit" className="button button-primary">Register</button>
         </form>

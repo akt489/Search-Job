@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 import { motion, AnimatePresence } from "framer-motion";
 import {
     UploadCloud,
@@ -20,7 +22,7 @@ const allowedTypes = [
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-export default function PostCV({ user }) {
+export default function PostCV({ user, token }) {
     const navigate = useNavigate();
 
     const [file, setFile] = useState(null);
@@ -105,18 +107,20 @@ export default function PostCV({ user }) {
             const formData = new FormData();
             formData.append("cv", file);
 
-            // Example API call
-            // await fetch("/api/upload-cv", {
-            //     method: "POST",
-            //     body: formData,
-            // });
+            const response = await fetch(`${API_BASE}/api/upload-cv`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
 
-            await new Promise((resolve) =>
-                setTimeout(resolve, 2500)
-            );
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'Upload failed.');
+            }
 
             clearInterval(interval);
-
             setProgress(100);
             setUploaded(true);
 

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 function Login({ onLogin }) {
     const [formData, setFormData] = useState({ email: '', password: '', remember: false });
     const [error, setError] = useState('');
@@ -12,15 +14,39 @@ function Login({ onLogin }) {
         setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
+
         if (!formData.email || !formData.password) {
             setError('Please enter email and password.');
             return;
         }
+
         setError('');
-        onLogin({ email: formData.email, name: 'JobSeeker' });
-        navigate('/dashboard');
+
+        try {
+            const response = await fetch(`${API_BASE}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                setError(data.error || 'Login failed.');
+                return;
+            }
+
+            onLogin(data.user, data.token);
+            navigate('/dashboard');
+        } catch (err) {
+            setError('Unable to reach the server. Please try again later.');
+        }
     };
 
     return (

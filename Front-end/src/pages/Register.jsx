@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 function Register({ onRegister }) {
     const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState({});
@@ -12,7 +14,7 @@ function Register({ onRegister }) {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const nextErrors = {};
 
@@ -24,8 +26,30 @@ function Register({ onRegister }) {
         setErrors(nextErrors);
         if (Object.keys(nextErrors).length) return;
 
-        onRegister({ email: formData.email, name: formData.fullName });
-        navigate('/dashboard');
+        try {
+            const response = await fetch(`${API_BASE}/api/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                setErrors({ form: data.error || 'Registration failed.' });
+                return;
+            }
+
+            onRegister(data.user, data.token);
+            navigate('/dashboard');
+        } catch (err) {
+            setErrors({ form: 'Unable to reach the server. Please try again later.' });
+        }
     };
 
     return (
