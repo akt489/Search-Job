@@ -28,19 +28,20 @@ router.post('/register', async (req, res) => {
     const normalizedEmail = email.toLowerCase();
 
     try {
-        const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+        // Check if user exists
+        const { rows: existing } = await pool.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
         if (existing.length) {
             return res.status(409).json({ error: 'This email is already registered.' });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        const [result] = await pool.query(
-            'INSERT INTO users (fullName, email, passwordHash) VALUES (?, ?, ?)',
+        const { rows: result } = await pool.query(
+            'INSERT INTO users (fullName, email, passwordHash) VALUES ($1, $2, $3) RETURNING id',
             [fullName.trim(), normalizedEmail, passwordHash]
         );
 
         const user = {
-            id: result.insertId,
+            id: result[0].id,
             fullName: fullName.trim(),
             email: normalizedEmail,
         };
@@ -62,7 +63,7 @@ router.post('/login', async (req, res) => {
 
     try {
         const normalizedEmail = email.toLowerCase();
-        const [rows] = await pool.query('SELECT id, fullName, email, passwordHash FROM users WHERE email = ?', [normalizedEmail]);
+        const { rows } = await pool.query('SELECT id, fullName, email, passwordHash FROM users WHERE email = $1', [normalizedEmail]);
         const user = rows[0];
 
         if (!user) {
@@ -97,7 +98,7 @@ router.post('/forgot-password', async (req, res) => {
 
     try {
         const normalizedEmail = email.toLowerCase();
-        const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+        const { rows } = await pool.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
         if (!rows.length) {
             // Return same response regardless of whether the user exists to avoid account enumeration.
             return res.json({ message: 'If this email is registered, a password reset link will be sent.' });

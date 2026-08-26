@@ -11,7 +11,7 @@ export default async function authenticate(req, res, next) {
 
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET || 'change-this-secret');
-        const [rows] = await pool.query('SELECT id, fullName, email FROM users WHERE id = ?', [payload.userId]);
+        const { rows } = await pool.query('SELECT id, fullName, email FROM users WHERE id = $1', [payload.userId]);
 
         if (!rows.length) {
             return res.status(401).json({ error: 'Unauthorized user.' });
