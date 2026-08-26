@@ -63,10 +63,19 @@ router.post('/login', async (req, res) => {
 
     try {
         const normalizedEmail = email.toLowerCase();
-        const { rows } = await pool.query('SELECT id, fullName, email, passwordHash FROM users WHERE email = $1', [normalizedEmail]);
+        const { rows } = await pool.query(
+            'SELECT id, fullName, email, passwordHash FROM users WHERE email = $1',
+            [normalizedEmail]
+        );
         const user = rows[0];
 
         if (!user) {
+            return res.status(401).json({ error: 'Invalid email or password.' });
+        }
+
+        // Check if passwordHash exists
+        if (!user.passwordHash) {
+            console.error('User has no passwordHash set:', user.email);
             return res.status(401).json({ error: 'Invalid email or password.' });
         }
 
@@ -84,7 +93,7 @@ router.post('/login', async (req, res) => {
 
         res.json({ user: safeUser, token });
     } catch (error) {
-        console.error(error);
+        console.error('Login error:', error);
         res.status(500).json({ error: 'Unable to log in at this time.' });
     }
 });
