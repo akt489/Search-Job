@@ -12,23 +12,38 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 
-// Security middleware
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS configuration
+// --- CORS Configuration ---
 const allowedOrigins = [
-    'http://localhost:5173',           // Local development
-    process.env.CLIENT_ORIGIN,         // For Railway frontend (set this env var)
-].filter(Boolean); // Remove undefined values
+    'http://localhost:5173',
+    'https://confident-wisdom-production-2fb8.up.railway.app', // Your frontend URL
+    process.env.CLIENT_ORIGIN,
+].filter(Boolean); // Remove any undefined values
 
 app.use(
     cors({
-        origin: allowedOrigins,
+        origin: function (origin, callback) {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            if (allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+            } else {
+                console.log('Blocked origin:', origin);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
+
+// --- Handle preflight OPTIONS requests explicitly ---
+app.options('*', cors());
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -44,7 +59,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/upload-cv', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
 
-// Health check
 app.get('/', (req, res) => {
     res.json({ message: 'Search Job backend is running.' });
 });
