@@ -51,7 +51,7 @@ function Login({ onLogin }) {
 
     // ✅ Google Login Handler
     const handleGoogleLogin = () => {
-        window.location.href = `${API_BASE}/api/auth/google`;
+        window.location.href = `${API_BASE}/auth/google`;
     };
 
     return (
