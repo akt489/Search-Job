@@ -7,7 +7,7 @@ import Pagination from '../components/Pagination';
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 function Jobs({ savedJobs, onToggleSave }) {
-    const [jobs, setJobs] = useState([]);
+    const [jobs, setJobs] = useState([]);    // ✅ Always start with empty array
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -29,10 +29,11 @@ function Jobs({ savedJobs, onToggleSave }) {
                 const response = await fetch(`${API_BASE}/api/jobs`);
                 if (!response.ok) throw new Error('Failed to load jobs');
                 const data = await response.json();
-                setJobs(data);
+                setJobs(data);   // ✅ data is an array
             } catch (err) {
                 setError('Unable to load jobs. Please try again later.');
                 console.error('Jobs fetch error:', err);
+                setJobs([]);     // ✅ fallback to empty array on error
             } finally {
                 setLoading(false);
             }
@@ -188,11 +189,19 @@ function Jobs({ savedJobs, onToggleSave }) {
                         </p>
                     </div>
 
-                    <JobList
-                        jobs={pageJobs}
-                        savedJobs={savedJobs}
-                        onToggleSave={onToggleSave}
-                    />
+                    {/* ✅ Safely render only if jobs exist */}
+                    {pageJobs.length > 0 ? (
+                        <JobList
+                            jobs={pageJobs}
+                            savedJobs={savedJobs}
+                            onToggleSave={onToggleSave}
+                        />
+                    ) : (
+                        <div className="empty-state">
+                            <h3>No jobs found</h3>
+                            <p>Try adjusting your filters or search terms.</p>
+                        </div>
+                    )}
 
                     <Pagination
                         currentPage={safeCurrentPage}
