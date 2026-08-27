@@ -56,12 +56,12 @@ const apiLimiter = rateLimit({
 });
 
 // --- Routes ---
-app.use('/api', apiLimiter);
-app.use('/api/auth', authRoutes);
-app.use('/api/auth', googleAuthRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/upload-cv', uploadRoutes);
-app.use('/api/jobs', jobsRoutes);
+app.use('/', apiLimiter);
+app.use('/auth', authRoutes);
+app.use('/auth', googleAuthRoutes);
+app.use('/users', usersRoutes);
+app.use('/upload-cv', uploadRoutes);
+app.use('/jobs', jobsRoutes);
 
 // --- Health Check ---
 app.get('/', (req, res) => {
