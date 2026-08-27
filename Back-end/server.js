@@ -59,7 +59,7 @@ app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/upload-cv', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
-app.use('/api/auth/google', googleAuthRoutes);
+app.use('/api/auth', googleAuthRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Search Job backend is running.' });
