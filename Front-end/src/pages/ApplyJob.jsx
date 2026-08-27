@@ -56,7 +56,7 @@ function ApplyJob({ user, onSubmit }) {
     const handleSubmit = async (applicationData) => {
         try {
             const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
-            const response = await fetch(`${API_BASE}/api/jobs/apply`, {
+            const response = await fetch(`${API_BASE}/jobs/apply`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
