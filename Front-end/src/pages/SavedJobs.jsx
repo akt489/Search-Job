@@ -13,7 +13,7 @@ function SavedJobs({ savedJobs, onToggleSave }) {
     useEffect(() => {
         const fetchSavedJobs = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
 
                 if (!token) {
                     navigate('/login');
@@ -29,7 +29,8 @@ function SavedJobs({ savedJobs, onToggleSave }) {
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        localStorage.removeItem('token');
+                        localStorage.removeItem('jobscout-token');
+                        localStorage.removeItem('jobscout-user');
                         navigate('/login');
                         return;
                     }
@@ -47,7 +48,7 @@ function SavedJobs({ savedJobs, onToggleSave }) {
         };
 
         fetchSavedJobs();
-    }, [navigate, savedJobs]); // Re-fetch when savedJobs changes (after toggling)
+    }, [navigate, savedJobs]);
 
     if (loading) {
         return (

@@ -4,6 +4,10 @@ import authenticate from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// ============================================
+// 1. SPECIFIC ROUTES (NO PARAMETERS) - FIRST
+// ============================================
+
 // GET all jobs with optional search + location filtering (public)
 router.get('/', async (req, res) => {
   try {
@@ -33,6 +37,40 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Unable to load jobs.' });
   }
 });
+
+// GET unique locations (for dropdown filter)
+router.get('/locations', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT DISTINCT location FROM jobs ORDER BY location');
+    const locations = rows.map(row => row.location);
+    res.json(locations);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Unable to load locations.' });
+  }
+});
+
+// Get application history (authenticated)
+router.get('/history', authenticate, async (req, res) => {
+  try {
+    const { rows: applications } = await pool.query(
+      `SELECT a.id, a.job_id, j.title, j.company, a.cover_letter, a.status, a.created_at
+             FROM applications a
+             JOIN jobs j ON a.job_id = j.id
+             WHERE a.user_id = $1
+             ORDER BY a.created_at DESC`,
+      [req.user.id]
+    );
+    res.json(applications);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Unable to load application history.' });
+  }
+});
+
+// ============================================
+// 2. PARAMETERIZED ROUTES (WITH :ID) - LAST
+// ============================================
 
 // GET a single job by ID (public)
 router.get('/:id', async (req, res) => {
@@ -77,36 +115,6 @@ router.post('/apply', authenticate, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Unable to create application.' });
-  }
-});
-
-// Get application history (authenticated)
-router.get('/history', authenticate, async (req, res) => {
-  try {
-    const { rows: applications } = await pool.query(
-      `SELECT a.id, a.job_id, j.title, j.company, a.cover_letter, a.status, a.created_at
-             FROM applications a
-             JOIN jobs j ON a.job_id = j.id
-             WHERE a.user_id = $1
-             ORDER BY a.created_at DESC`,
-      [req.user.id]
-    );
-    res.json(applications);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Unable to load application history.' });
-  }
-});
-
-// GET unique locations (for dropdown filter)
-router.get('/locations', async (req, res) => {
-  try {
-    const { rows } = await pool.query('SELECT DISTINCT location FROM jobs ORDER BY location');
-    const locations = rows.map(row => row.location);
-    res.json(locations);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Unable to load locations.' });
   }
 });
 

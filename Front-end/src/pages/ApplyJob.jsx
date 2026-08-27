@@ -19,7 +19,7 @@ function ApplyJob({ user, onSubmit }) {
 
         const fetchJob = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
                 const response = await fetch(`${API_BASE}/api/jobs/${jobId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -55,7 +55,7 @@ function ApplyJob({ user, onSubmit }) {
 
     const handleSubmit = async (applicationData) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
             const response = await fetch(`${API_BASE}/api/jobs/apply`, {
                 method: 'POST',
                 headers: {
@@ -77,7 +77,6 @@ function ApplyJob({ user, onSubmit }) {
                 throw new Error(data.error || 'Application failed.');
             }
 
-            // Call the onSubmit prop to notify parent (optional)
             if (onSubmit) {
                 onSubmit(applicationData);
             }

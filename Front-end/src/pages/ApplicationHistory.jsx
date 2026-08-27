@@ -13,8 +13,7 @@ function ApplicationHistory() {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                // Get the token from localStorage (or wherever you store it)
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
 
                 if (!token) {
                     navigate('/login');
@@ -30,8 +29,8 @@ function ApplicationHistory() {
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        // Token expired or invalid
-                        localStorage.removeItem('token');
+                        localStorage.removeItem('jobscout-token');
+                        localStorage.removeItem('jobscout-user');
                         navigate('/login');
                         return;
                     }

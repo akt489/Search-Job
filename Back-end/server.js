@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import usersRoutes from './routes/usersRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
 import googleAuthRoutes from './routes/googleAuth.js';
@@ -57,6 +58,7 @@ const apiLimiter = rateLimit({
 // Routes
 app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/upload-cv', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/auth', googleAuthRoutes);
