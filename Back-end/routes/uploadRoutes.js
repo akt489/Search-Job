@@ -49,7 +49,7 @@ router.post('/', authenticate, upload.single('cv'), async (req, res) => {
     try {
         const { filename, originalname, mimetype, size, path: filePath } = req.file;
         await pool.query(
-            'INSERT INTO cvs (user_id, filename, original_name, mime_type, size, path) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO cvs (user_id, filename, original_name, mime_type, size, path) VALUES ($1, $2, $3, $4, $5, $6)',
             [req.user.id, filename, originalname, mimetype, size, filePath]
         );
 
