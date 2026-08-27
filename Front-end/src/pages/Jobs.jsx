@@ -1,11 +1,15 @@
-import { useMemo, useState } from 'react';
-import jobsData from '../data/mockJobs';
+import { useMemo, useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
 import FilterPanel from '../components/FilterPanel';
 import JobList from '../components/JobList';
 import Pagination from '../components/Pagination';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 function Jobs({ savedJobs, onToggleSave }) {
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     const [filters, setFilters] = useState({
@@ -18,25 +22,64 @@ function Jobs({ savedJobs, onToggleSave }) {
 
     const [currentPage, setCurrentPage] = useState(1);
 
+    // Fetch all jobs from the API
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/jobs`);
+                if (!response.ok) throw new Error('Failed to load jobs');
+                const data = await response.json();
+                setJobs(data);
+            } catch (err) {
+                setError('Unable to load jobs. Please try again later.');
+                console.error('Jobs fetch error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchJobs();
+    }, []);
+
+    // Filter jobs based on search and filters
     const filteredJobs = useMemo(() => {
-        return jobsData.filter((job) => {
+        return jobs.filter((job) => {
+            // Search filter
             const matchesSearch =
                 searchQuery.trim() === '' ||
                 [job.title, job.company, job.category, job.description].some((value) =>
-                    value.toLowerCase().includes(searchQuery.toLowerCase())
+                    value?.toLowerCase().includes(searchQuery.toLowerCase())
                 );
 
+            // Category filter
             const matchesCategory = filters.category === 'All' || job.category === filters.category;
-            const matchesLocation = filters.location === 'All' || job.location === filters.location;
-            const matchesType = filters.employmentType === 'All' || job.employmentType === filters.employmentType;
-            const matchesLevel = filters.careerLevel === 'All' || job.careerLevel === filters.careerLevel;
 
-            const matchesPosted =
-                filters.postedWithin === 'Any' ||
-                (filters.postedWithin === 'Last 24 hours' && job.posted.toLowerCase().includes('hour')) ||
-                (filters.postedWithin === 'Last 3 days' && /hour|day/.test(job.posted.toLowerCase())) ||
-                (filters.postedWithin === 'Last 7 days' && /day|week/.test(job.posted.toLowerCase())) ||
-                (filters.postedWithin === 'Last 14 days' && /day|week/.test(job.posted.toLowerCase()));
+            // Location filter
+            const matchesLocation = filters.location === 'All' || job.location === filters.location;
+
+            // Employment type filter (maps to job.type)
+            const matchesType = filters.employmentType === 'All' || job.type === filters.employmentType;
+
+            // Career level filter (not in database, so always matches)
+            const matchesLevel = filters.careerLevel === 'All' || true;
+
+            // Posted within filter (uses posted_at)
+            let matchesPosted = true;
+            if (filters.postedWithin !== 'Any' && job.posted_at) {
+                const postedDate = new Date(job.posted_at);
+                const now = new Date();
+                const daysAgo = Math.floor((now - postedDate) / (1000 * 60 * 60 * 24));
+
+                if (filters.postedWithin === 'Last 24 hours') {
+                    matchesPosted = daysAgo <= 1;
+                } else if (filters.postedWithin === 'Last 3 days') {
+                    matchesPosted = daysAgo <= 3;
+                } else if (filters.postedWithin === 'Last 7 days') {
+                    matchesPosted = daysAgo <= 7;
+                } else if (filters.postedWithin === 'Last 14 days') {
+                    matchesPosted = daysAgo <= 14;
+                }
+            }
 
             return (
                 matchesSearch &&
@@ -47,16 +90,24 @@ function Jobs({ savedJobs, onToggleSave }) {
                 matchesPosted
             );
         });
-    }, [filters, searchQuery]);
+    }, [jobs, filters, searchQuery]);
 
+    // Pagination
     const jobsPerPage = 10;
     const totalPages = Math.max(1, Math.ceil(filteredJobs.length / jobsPerPage));
 
+    // Ensure current page is valid
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+    if (safeCurrentPage !== currentPage) {
+        setCurrentPage(safeCurrentPage);
+    }
+
     const pageJobs = filteredJobs.slice(
-        (currentPage - 1) * jobsPerPage,
-        currentPage * jobsPerPage
+        (safeCurrentPage - 1) * jobsPerPage,
+        safeCurrentPage * jobsPerPage
     );
 
+    // Handlers
     const handleSearchChange = (event) => {
         setSearchQuery(event.target.value);
         setCurrentPage(1);
@@ -74,6 +125,34 @@ function Jobs({ savedJobs, onToggleSave }) {
         }));
         setCurrentPage(1);
     };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="page-content page-jobs">
+                <div className="section-heading">
+                    <div>
+                        <h1>Explore open roles</h1>
+                        <p>Loading jobs...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="page-content page-jobs">
+                <div className="section-heading">
+                    <div>
+                        <h1>Explore open roles</h1>
+                        <p className="error-message">{error}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="page-content page-jobs">
@@ -116,7 +195,7 @@ function Jobs({ savedJobs, onToggleSave }) {
                     />
 
                     <Pagination
-                        currentPage={currentPage}
+                        currentPage={safeCurrentPage}
                         totalPages={totalPages}
                         onChange={setCurrentPage}
                     />

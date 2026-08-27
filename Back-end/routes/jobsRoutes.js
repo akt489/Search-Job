@@ -4,16 +4,53 @@ import authenticate from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// GET all jobs (public)
+// GET all jobs with optional search + location filtering (public)
 router.get('/', async (req, res) => {
   try {
-    const { rows: jobs } = await pool.query(
-      'SELECT id, title, company, location, category, type, salary, remote, description, posted_at FROM jobs ORDER BY posted_at DESC'
-    );
+    const { search, location } = req.query;
+    let query = 'SELECT id, title, company, location, category, type, salary, remote, description, posted_at FROM jobs WHERE 1=1';
+    const params = [];
+    let paramIndex = 1;
+
+    if (search) {
+      query += ` AND (title ILIKE $${paramIndex} OR company ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (location && location !== 'All') {
+      query += ` AND location = $${paramIndex}`;
+      params.push(location);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY posted_at DESC';
+
+    const { rows: jobs } = await pool.query(query, params);
     res.json(jobs);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Unable to load jobs.' });
+  }
+});
+
+// GET a single job by ID (public)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      'SELECT id, title, company, location, category, type, salary, remote, description, posted_at FROM jobs WHERE id = $1',
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Job not found.' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Unable to load job details.' });
   }
 });
 
