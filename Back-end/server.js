@@ -14,40 +14,40 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 
+// --- Security Middleware ---
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- CORS Configuration ---
+// --- CORS Configuration (Simplified) ---
 const allowedOrigins = [
     'http://localhost:5173',
-    'https://confident-wisdom-production-2fb8.up.railway.app', // Your frontend URL
+    'https://confident-wisdom-production-2fb8.up.railway.app',
     process.env.CLIENT_ORIGIN,
-].filter(Boolean); // Remove any undefined values
+].filter(Boolean);
 
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            // Allow requests with no origin (like mobile apps or curl requests)
-            if (!origin) return callback(null, true);
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
 
-            if (allowedOrigins.indexOf(origin) !== -1) {
-                callback(null, true);
-            } else {
-                console.log('Blocked origin:', origin);
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-    })
-);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`Blocked CORS request from origin: ${origin}`);
+            callback(null, false); // Instead of error, just deny
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+}));
 
 // --- Handle preflight OPTIONS requests explicitly ---
 app.options('*', cors());
 
-// Rate limiting
+// --- Rate Limiting ---
 const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 120,
@@ -55,18 +55,21 @@ const apiLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// Routes
+// --- Routes ---
 app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', googleAuthRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/upload-cv', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
-app.use('/api/auth', googleAuthRoutes);
 
+// --- Health Check ---
 app.get('/', (req, res) => {
     res.json({ message: 'Search Job backend is running.' });
 });
 
+// --- Start Server ---
 app.listen(port, () => {
     console.log(`Backend listening on http://localhost:${port}`);
+    console.log(`Allowed origins:`, allowedOrigins);
 });
