@@ -1,8 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import dns from 'dns';           // ✅ Built-in, no install needed
-import { promisify } from 'util'; // ✅ Built-in, no install needed
+import dns from 'dns';
+import { promisify } from 'util';
 import pool from '../db.js';
 
 const router = express.Router();
@@ -122,7 +122,50 @@ function isDisposableEmail(email) {
     return disposableDomains.includes(domain);
 }
 
-// 2c. Check if domain has MX records (with 5-second timeout)
+// 2c. Check if domain is a valid Google (Gmail) domain
+async function isGoogleEmailDomain(email) {
+    const domain = email.split('@')[1].toLowerCase();
+
+    // First, check if it's gmail.com or googlemail.com
+    if (domain === 'gmail.com' || domain === 'googlemail.com') {
+        return true;
+    }
+
+    // For custom domains, check if MX records point to Google
+    try {
+        const addresses = await Promise.race([
+            resolveMx(domain),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('DNS lookup timed out')), 5000)
+            ),
+        ]);
+
+        if (!addresses || addresses.length === 0) {
+            return false;
+        }
+
+        // Check if any MX record points to Google's servers
+        const googleMxDomains = [
+            'google.com',
+            'googlemail.com',
+            'gmail.com',
+        ];
+
+        const isGoogle = addresses.some((record) => {
+            const exchange = record.exchange.toLowerCase();
+            return googleMxDomains.some((googleDomain) =>
+                exchange.includes(googleDomain)
+            );
+        });
+
+        return isGoogle;
+    } catch (error) {
+        console.warn(`DNS lookup failed for ${domain}:`, error.message);
+        return false;
+    }
+}
+
+// 2d. Check if domain has any MX records (fallback for non-Google domains)
 async function hasValidMXRecords(email) {
     const domain = email.split('@')[1];
     try {
@@ -140,7 +183,7 @@ async function hasValidMXRecords(email) {
 }
 
 // ============================================
-// 3. REGISTER ROUTE (with DNS validation)
+// 3. REGISTER ROUTE (with Google-only validation)
 // ============================================
 router.post('/register', async (req, res) => {
     const { fullName, email, password } = req.body;
@@ -168,11 +211,11 @@ router.post('/register', async (req, res) => {
         });
     }
 
-    // 4. DNS / MX records check (with timeout)
-    const hasValidMX = await hasValidMXRecords(normalizedEmail);
-    if (!hasValidMX) {
+    // 4. Check if it's a Google email domain (Gmail or Google Workspace)
+    const isGoogle = await isGoogleEmailDomain(normalizedEmail);
+    if (!isGoogle) {
         return res.status(400).json({
-            error: 'Invalid email domain. Please use a real email address from a valid provider (e.g., Gmail, Yahoo, Outlook).',
+            error: 'Only Gmail and Google Workspace email addresses are allowed. Please use a Google-powered email address (e.g., @gmail.com, @googlemail.com, or your company\'s Google Workspace email).',
         });
     }
 
