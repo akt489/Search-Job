@@ -12,7 +12,7 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
       <div className={open ? 'navbar-inner open' : 'navbar-inner'}>
         <Link to="/" className="brand-link" onClick={closeMenu}>
           <span className="logo-mark">
-            <img src="./public/favicon.png" alt="SearchJob logo" style={{ borderRadius: '50%' }} />
+            <img src="/favicon.png" alt="SearchJob logo" style={{ borderRadius: '50%' }} />
           </span>
           SearchJob
         </Link>
@@ -38,7 +38,7 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               <img
-                src={theme === 'dark' ? './public/light_mode.png' : './public/dark_mode.png'}
+                src={theme === 'dark' ? '/light_mode.png' : '/dark_mode.png'}
                 alt={theme === 'dark' ? 'Light mode' : 'Dark mode'}
                 style={{ width: '20px', height: '20px' }}
               />
