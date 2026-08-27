@@ -1,7 +1,11 @@
 function ApplicationHistoryTable({ applications, jobs }) {
-    if (!applications.length) {
+    // ✅ Safety check: ensure applications is an array
+    if (!Array.isArray(applications) || applications.length === 0) {
         return <p className="empty-state">No applications have been submitted yet.</p>;
     }
+
+    // ✅ Ensure jobs is an array (for find to work)
+    const jobsArray = Array.isArray(jobs) ? jobs : [];
 
     return (
         <div className="history-table">
@@ -12,14 +16,15 @@ function ApplicationHistoryTable({ applications, jobs }) {
                 <span>Status</span>
             </div>
             {applications.map((application) => {
-                const job = jobs.find((item) => item.id === application.jobId) || {};
+                // ✅ Safe find with fallback
+                const job = jobsArray.find((item) => item.id === application.jobId) || {};
                 return (
                     <div key={`${application.jobId}-${application.appliedDate}`} className="history-row">
                         <span>{job.title || 'Unknown role'}</span>
                         <span>{job.company || '—'}</span>
                         <span>{application.appliedDate}</span>
-                        <span className={`status-pill status-${application.status.toLowerCase().replace(' ', '-')}`}>
-                            {application.status}
+                        <span className={`status-pill status-${application.status?.toLowerCase().replace(' ', '-') || 'submitted'}`}>
+                            {application.status || 'Submitted'}
                         </span>
                     </div>
                 );

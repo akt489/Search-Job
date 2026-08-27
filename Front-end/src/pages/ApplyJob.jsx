@@ -19,7 +19,7 @@ function ApplyJob({ user, onSubmit }) {
 
         const fetchJob = async () => {
             try {
-                const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
+                const token = localStorage.getItem('jobscout-token');
                 const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -55,8 +55,33 @@ function ApplyJob({ user, onSubmit }) {
 
     const handleSubmit = async (applicationData) => {
         try {
-            const token = localStorage.getItem('jobscout-token'); // ✅ FIXED
-            const response = await fetch(`${API_BASE}/jobs/apply`, {
+            const token = localStorage.getItem('jobscout-token');
+            if (!token) {
+                navigate('/login');
+                return;
+            }
+
+            // ✅ Step 1: Upload CV
+            const formData = new FormData();
+            formData.append('cv', applicationData.file);
+            formData.append('jobId', jobId);
+            formData.append('coverLetter', applicationData.coverLetter || '');
+
+            const uploadResponse = await fetch(`${API_BASE}/upload-cv`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json();
+                throw new Error(errorData.error || 'Failed to upload CV');
+            }
+
+            // ✅ Step 2: Submit application
+            const applyResponse = await fetch(`${API_BASE}/jobs/apply`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -68,12 +93,12 @@ function ApplyJob({ user, onSubmit }) {
                 }),
             });
 
-            if (!response.ok) {
-                if (response.status === 401) {
+            if (!applyResponse.ok) {
+                if (applyResponse.status === 401) {
                     navigate('/login');
                     return;
                 }
-                const data = await response.json();
+                const data = await applyResponse.json();
                 throw new Error(data.error || 'Application failed.');
             }
 
