@@ -20,7 +20,7 @@ function SavedJobs({ savedJobs, onToggleSave }) {
                     return;
                 }
 
-                const response = await fetch(`${API_BASE}/api/users/saved-jobs`, {
+                const response = await fetch(`${API_BASE}/users/saved-jobs`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',

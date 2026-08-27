@@ -14,7 +14,7 @@ function JobDetailsPage({ savedJobs, onToggleSave }) {
     useEffect(() => {
         const fetchJob = async () => {
             try {
-                const response = await fetch(`${API_BASE}/api/jobs/${jobId}`);
+                const response = await fetch(`${API_BASE}/jobs/${jobId}`);
 
                 if (!response.ok) {
                     if (response.status === 404) {

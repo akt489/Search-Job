@@ -26,7 +26,7 @@ function Jobs({ savedJobs, onToggleSave }) {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const response = await fetch(`${API_BASE}/api/jobs`);
+                const response = await fetch(`${API_BASE}/jobs`);
                 if (!response.ok) throw new Error('Failed to load jobs');
                 const data = await response.json();
                 setJobs(Array.isArray(data) ? data : []);

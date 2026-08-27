@@ -20,7 +20,7 @@ function ApplicationHistory() {
                     return;
                 }
 
-                const response = await fetch(`${API_BASE}/api/jobs/history`, {
+                const response = await fetch(`${API_BASE}/jobs/history`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
