@@ -58,7 +58,7 @@ function App() {
 
       try {
         // Fetch saved jobs
-        const savedResponse = await fetch(`${API_BASE}/api/users/saved-jobs`, {
+        const savedResponse = await fetch(`${API_BASE}/users/saved-jobs`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ function App() {
         }
 
         // Fetch application history
-        const historyResponse = await fetch(`${API_BASE}/api/jobs/history`, {
+        const historyResponse = await fetch(`${API_BASE}/jobs/history`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/saved-jobs/toggle`, {
+      const response = await fetch(`${API_BASE}/users/saved-jobs/toggle`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
