@@ -17,6 +17,7 @@ import ApplyJob from './pages/ApplyJob';
 import FindCompany from './pages/FindCompany';
 import PostCV from './pages/PostCV';
 import ForgotPassword from './pages/ForgotPassword';
+import AuthCallback from './pages/AuthCallback';
 
 import './App.css';
 
@@ -227,6 +228,11 @@ function App() {
           <Route
             path="/register"
             element={<Register onRegister={handleRegister} />}
+          />
+
+          <Route
+            path="/auth/callback"
+            element={<AuthCallback />}
           />
 
           <Route

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
+import googleAuthRoutes from './routes/googleAuth.js';
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/upload-cv', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/auth/google', googleAuthRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Search Job backend is running.' });
