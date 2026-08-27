@@ -1,30 +1,25 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
 
+export type HeaderProps = {
+  title?: string;
+};
 
-function Header() {
-    return (
-        <nav>
-            <style>
-                .container{`
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                `}
-                .nav-links {`
-                    display: flex;
-                    gap: 1rem;
-                `}
-            </style>
-            <div className="container">
-                <div>icon</div>
-                <div className="nav-links">
-                    <a href="/">Find jobs</a>
-                    <a href="/about">Find companies</a>
-                    <a href="/contact">Log in</a>
-                    <a href="/contact">Sign up</a>
-                </div>
-            </div>
-        </nav>
-    );
-}
+const Header: React.FC<HeaderProps> = ({ title = 'SearchJob' }) => {
+  return (
+    <header className="header-container" aria-label="Site Header">
+      <Link to="/" className="brand-link">
+        <span className="logo-mark">💼</span>
+        {title}
+      </Link>
+      <nav className="nav-links" aria-label="Header Navigation">
+        <Link to="/jobs">Find jobs</Link>
+        <Link to="/companies">Find companies</Link>
+        <Link to="/login">Log in</Link>
+        <Link to="/register">Sign up</Link>
+      </nav>
+    </header>
+  );
+};
 
 export default Header;

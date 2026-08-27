@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 export type JobType = {
@@ -20,13 +21,13 @@ export type JobType = {
   [key: string]: any;
 };
 
-type JobCardProps = {
+export type JobCardProps = {
   job: JobType;
   saved: boolean;
-  onToggleSave: (jobId: any) => void;
+  onToggleSave: (jobId: string | number) => void;
 };
 
-function JobCard({ job, saved, onToggleSave }: JobCardProps) {
+const JobCard: React.FC<JobCardProps> = ({ job, saved, onToggleSave }) => {
   const descriptionText = job.description || '';
   const preview = descriptionText.length > 120 ? `${descriptionText.slice(0, 120)}...` : descriptionText;
   
@@ -42,28 +43,33 @@ function JobCard({ job, saved, onToggleSave }: JobCardProps) {
     : (job.category ? [job.category] : []);
 
   return (
-    <article className="job-card">
+    <article className="job-card" aria-labelledby={`job-title-${job.id}`}>
       <div className="job-card-top">
         <div>
-          <h3>{job.title}</h3>
+          <h3 id={`job-title-${job.id}`}>{job.title}</h3>
           <Link to={`/jobs/${job.id}`} className="company-link">
             {job.company}
           </Link>
         </div>
-        <button type="button" className={saved ? 'save-button saved' : 'save-button'} onClick={() => onToggleSave(String(job.id))}>
-          {saved ? 'Saved' : 'Save'}
+        <button
+          type="button"
+          className={saved ? 'save-button saved' : 'save-button'}
+          onClick={() => onToggleSave(String(job.id))}
+          aria-label={saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
+        >
+          {saved ? '★ Saved' : '☆ Save'}
         </button>
       </div>
 
       <div className="job-meta">
-        <span>{postedDate}</span>
-        <span>{job.location}</span>
-        <span>{employmentType}</span>
-        <span>{careerLevel}</span>
-        <span>{workMode}</span>
+        <span>📅 {postedDate}</span>
+        <span>📍 {job.location}</span>
+        <span>💼 {employmentType}</span>
+        <span>🎯 {careerLevel}</span>
+        <span>🌐 {workMode}</span>
       </div>
 
-      <p className="job-preview">{preview}</p>
+      {preview && <p className="job-preview">{preview}</p>}
 
       {tags.length > 0 && (
         <div className="job-tag-row">
@@ -76,14 +82,14 @@ function JobCard({ job, saved, onToggleSave }: JobCardProps) {
       )}
 
       <div className="job-card-footer">
-        <span>{salaryText}</span>
-        <span>Apply by {deadlineText}</span>
+        <span>💰 {salaryText}</span>
+        <span>⏳ Apply by {deadlineText}</span>
         <Link to={`/jobs/${job.id}`} className="button button-secondary small-button">
           View Details
         </Link>
       </div>
     </article>
   );
-}
+};
 
 export default JobCard;

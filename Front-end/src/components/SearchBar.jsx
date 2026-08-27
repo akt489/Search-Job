@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 
 function SearchBar({ value, onChange, onSubmit, placeholder }) {
   const [error, setError] = useState('');
@@ -21,37 +22,47 @@ function SearchBar({ value, onChange, onSubmit, placeholder }) {
   };
 
   return (
-    <form className="search-bar" onSubmit={handleSubmit} noValidate>
-      <label htmlFor="search-input" className="sr-only">
-        Search jobs
-      </label>
+    <form className="search-bar" onSubmit={handleSubmit} noValidate role="search">
+      <div className="search-field-container">
+        <div className="search-field">
+          <label htmlFor="search-input" className="sr-only">
+            Search jobs
+          </label>
+          <input
+            id="search-input"
+            type="search"
+            className="search-input"
+            value={value}
+            onChange={handleChange}
+            placeholder={placeholder || 'Search by title, company, or keyword...'}
+            aria-invalid={error ? 'true' : 'false'}
+            aria-describedby={error ? 'search-error' : undefined}
+          />
+        </div>
 
-      <div className="search-field">
-        <input
-          id="search-input"
-          type="search"
-          className="search-input"
-          value={value}
-          onChange={handleChange}
-          placeholder={placeholder || 'Search by title, company, or keyword...'}
-          aria-invalid={error ? 'true' : 'false'}
-          aria-describedby="search-error"
-        />
-
-        <p
-          className={`search-error ${error ? 'visible' : ''}`}
-          id="search-error"
-          role="alert"
-        >
-          {error || '\u00A0'}
-        </p>
+        <button type="submit" className="button button-primary search-button">
+          Search
+        </button>
       </div>
 
-      <button type="submit" className="button button-primary search-button">
-        Search
-      </button>
+      {error && (
+        <p className="search-error" id="search-error" role="alert">
+          {error}
+        </p>
+      )}
     </form>
   );
 }
+
+SearchBar.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+};
+
+SearchBar.defaultProps = {
+  placeholder: 'Search by title, company, or keyword...',
+};
 
 export default SearchBar;
