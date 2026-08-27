@@ -27,7 +27,7 @@ type HomeProps = {
 
 function Home({ savedJobs, onToggleSave }: HomeProps) {
     const [searchText, setSearchText] = useState('');
-    const [allJobs, setAllJobs] = useState<Job[]>([]); // 👈 Typed as Job[]
+    const [allJobs, setAllJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -38,10 +38,11 @@ function Home({ savedJobs, onToggleSave }: HomeProps) {
                 const response = await fetch(`${API_BASE}/api/jobs`);
                 if (!response.ok) throw new Error('Failed to load jobs');
                 const data = await response.json();
-                setAllJobs(data);
+                setAllJobs(Array.isArray(data) ? data : []);
             } catch (err) {
                 setError('Unable to load jobs. Please try again later.');
                 console.error('Jobs fetch error:', err);
+                setAllJobs([]);
             } finally {
                 setLoading(false);
             }
@@ -50,22 +51,24 @@ function Home({ savedJobs, onToggleSave }: HomeProps) {
         fetchJobs();
     }, []);
 
+    const safeAllJobs = Array.isArray(allJobs) ? allJobs : [];
+
     // Filter jobs based on search text
     const searchResults = useMemo(
         () =>
-            allJobs.filter((job) =>
+            safeAllJobs.filter((job) =>
                 [job.title, job.company, job.description].some((value) =>
                     value?.toLowerCase().includes(searchText.toLowerCase())
                 )
             ),
-        [allJobs, searchText]
+        [safeAllJobs, searchText]
     );
 
     // Featured jobs: first 3
-    const featuredJobs = allJobs.slice(0, 3);
+    const featuredJobs = safeAllJobs.slice(0, 3);
 
     // Recent jobs: next 5 (or all remaining)
-    const recentJobs = allJobs.slice(3, 8);
+    const recentJobs = safeAllJobs.slice(3, 8);
 
     if (loading) {
         return (

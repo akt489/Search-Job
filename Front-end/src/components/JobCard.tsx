@@ -1,26 +1,45 @@
 import { Link } from 'react-router-dom';
 
+export type JobType = {
+  id: string | number;
+  title: string;
+  company: string;
+  location: string;
+  category?: string;
+  type?: string;
+  employmentType?: string;
+  careerLevel?: string;
+  workMode?: string;
+  remote?: boolean;
+  salary?: string;
+  description?: string;
+  posted?: string;
+  posted_at?: string;
+  deadline?: string;
+  tags?: string[];
+  [key: string]: any;
+};
+
 type JobCardProps = {
-  job: {
-    id: string;
-    title: string;
-    company: string;
-    description: string;
-    posted: string;
-    location: string;
-    employmentType: string;
-    careerLevel: string;
-    workMode: string;
-    tags: string[];
-    salary: string;
-    deadline: string;
-  };
+  job: JobType;
   saved: boolean;
-  onToggleSave: (jobId: string) => void;
+  onToggleSave: (jobId: any) => void;
 };
 
 function JobCard({ job, saved, onToggleSave }: JobCardProps) {
-  const preview = job.description.length > 120 ? `${job.description.slice(0, 120)}...` : job.description;
+  const descriptionText = job.description || '';
+  const preview = descriptionText.length > 120 ? `${descriptionText.slice(0, 120)}...` : descriptionText;
+  
+  const postedDate = job.posted || (job.posted_at ? new Date(job.posted_at).toLocaleDateString() : 'Recently');
+  const employmentType = job.employmentType || job.type || 'Full Time';
+  const careerLevel = job.careerLevel || 'Mid Level';
+  const workMode = job.workMode || (job.remote ? 'Remote' : 'On-site');
+  const salaryText = job.salary || 'Competitive';
+  const deadlineText = job.deadline || 'Open';
+
+  const tags = Array.isArray(job.tags) 
+    ? job.tags 
+    : (job.category ? [job.category] : []);
 
   return (
     <article className="job-card">
@@ -31,32 +50,34 @@ function JobCard({ job, saved, onToggleSave }: JobCardProps) {
             {job.company}
           </Link>
         </div>
-        <button type="button" className={saved ? 'save-button saved' : 'save-button'} onClick={() => onToggleSave(job.id)}>
+        <button type="button" className={saved ? 'save-button saved' : 'save-button'} onClick={() => onToggleSave(String(job.id))}>
           {saved ? 'Saved' : 'Save'}
         </button>
       </div>
 
       <div className="job-meta">
-        <span>{job.posted}</span>
+        <span>{postedDate}</span>
         <span>{job.location}</span>
-        <span>{job.employmentType}</span>
-        <span>{job.careerLevel}</span>
-        <span>{job.workMode}</span>
+        <span>{employmentType}</span>
+        <span>{careerLevel}</span>
+        <span>{workMode}</span>
       </div>
 
       <p className="job-preview">{preview}</p>
 
-      <div className="job-tag-row">
-        {job.tags.map((tag) => (
-          <span key={`${job.id}-${tag}`} className="job-tag">
-            {tag}
-          </span>
-        ))}
-      </div>
+      {tags.length > 0 && (
+        <div className="job-tag-row">
+          {tags.map((tag) => (
+            <span key={`${job.id}-${tag}`} className="job-tag">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="job-card-footer">
-        <span>{job.salary}</span>
-        <span>Apply by {job.deadline}</span>
+        <span>{salaryText}</span>
+        <span>Apply by {deadlineText}</span>
         <Link to={`/jobs/${job.id}`} className="button button-secondary small-button">
           View Details
         </Link>

@@ -7,7 +7,7 @@ import Pagination from '../components/Pagination';
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 function Jobs({ savedJobs, onToggleSave }) {
-    const [jobs, setJobs] = useState([]);    // ✅ Always start with empty array
+    const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -29,11 +29,11 @@ function Jobs({ savedJobs, onToggleSave }) {
                 const response = await fetch(`${API_BASE}/api/jobs`);
                 if (!response.ok) throw new Error('Failed to load jobs');
                 const data = await response.json();
-                setJobs(data);   // ✅ data is an array
+                setJobs(Array.isArray(data) ? data : []);
             } catch (err) {
                 setError('Unable to load jobs. Please try again later.');
                 console.error('Jobs fetch error:', err);
-                setJobs([]);     // ✅ fallback to empty array on error
+                setJobs([]);
             } finally {
                 setLoading(false);
             }
@@ -44,7 +44,8 @@ function Jobs({ savedJobs, onToggleSave }) {
 
     // Filter jobs based on search and filters
     const filteredJobs = useMemo(() => {
-        return jobs.filter((job) => {
+        const safeJobs = Array.isArray(jobs) ? jobs : [];
+        return safeJobs.filter((job) => {
             // Search filter
             const matchesSearch =
                 searchQuery.trim() === '' ||
@@ -58,10 +59,10 @@ function Jobs({ savedJobs, onToggleSave }) {
             // Location filter
             const matchesLocation = filters.location === 'All' || job.location === filters.location;
 
-            // Employment type filter (maps to job.type)
-            const matchesType = filters.employmentType === 'All' || job.type === filters.employmentType;
+            // Employment type filter (maps to job.type or job.employmentType)
+            const matchesType = filters.employmentType === 'All' || (job.type || job.employmentType) === filters.employmentType;
 
-            // Career level filter (not in database, so always matches)
+            // Career level filter
             const matchesLevel = filters.careerLevel === 'All' || true;
 
             // Posted within filter (uses posted_at)
@@ -69,7 +70,7 @@ function Jobs({ savedJobs, onToggleSave }) {
             if (filters.postedWithin !== 'Any' && job.posted_at) {
                 const postedDate = new Date(job.posted_at);
                 const now = new Date();
-                const daysAgo = Math.floor((now - postedDate) / (1000 * 60 * 60 * 24));
+                const daysAgo = Math.floor((now.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
 
                 if (filters.postedWithin === 'Last 24 hours') {
                     matchesPosted = daysAgo <= 1;
@@ -99,9 +100,6 @@ function Jobs({ savedJobs, onToggleSave }) {
 
     // Ensure current page is valid
     const safeCurrentPage = Math.min(currentPage, totalPages);
-    if (safeCurrentPage !== currentPage) {
-        setCurrentPage(safeCurrentPage);
-    }
 
     const pageJobs = filteredJobs.slice(
         (safeCurrentPage - 1) * jobsPerPage,
@@ -115,7 +113,7 @@ function Jobs({ savedJobs, onToggleSave }) {
     };
 
     const handleSearchSubmit = (value) => {
-        setSearchQuery(value.trim());
+        setSearchQuery(typeof value === 'string' ? value.trim() : searchQuery.trim());
         setCurrentPage(1);
     };
 
@@ -189,7 +187,6 @@ function Jobs({ savedJobs, onToggleSave }) {
                         </p>
                     </div>
 
-                    {/* ✅ Safely render only if jobs exist */}
                     {pageJobs.length > 0 ? (
                         <JobList
                             jobs={pageJobs}
