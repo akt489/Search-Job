@@ -140,13 +140,18 @@ async function hasValidMXRecords(email) {
 }
 
 // ============================================
-// 3. REGISTER ROUTE (with DNS validation)
+// 3. REGISTER ROUTE (with DNS validation & DEBUG LOGS)
 // ============================================
 router.post('/register', async (req, res) => {
+    console.log('=========================================');
+    console.log('📝 REGISTRATION ATTEMPT');
+    console.log('=========================================');
+
     const { fullName, email, password } = req.body;
 
     // 1. Basic presence check
     if (!fullName?.trim() || !email?.trim() || !password) {
+        console.log('❌ Missing fields:', { fullName: !!fullName, email: !!email, password: !!password });
         return res.status(400).json({
             error: 'Full name, email, and password are required.',
         });
@@ -156,6 +161,7 @@ router.post('/register', async (req, res) => {
 
     // 2. Format validation
     if (!isValidEmailFormat(normalizedEmail)) {
+        console.log('❌ Invalid email format:', normalizedEmail);
         return res.status(400).json({
             error: 'Please enter a valid email address format (e.g., user@domain.com).',
         });
@@ -163,6 +169,7 @@ router.post('/register', async (req, res) => {
 
     // 3. Disposable email check
     if (isDisposableEmail(normalizedEmail)) {
+        console.log('❌ Disposable email detected:', normalizedEmail);
         return res.status(400).json({
             error: 'Temporary or disposable email addresses are not allowed. Please use a real email address.',
         });
@@ -171,6 +178,7 @@ router.post('/register', async (req, res) => {
     // 4. DNS / MX records check (with timeout)
     const hasValidMX = await hasValidMXRecords(normalizedEmail);
     if (!hasValidMX) {
+        console.log('❌ Invalid MX records for domain:', normalizedEmail);
         return res.status(400).json({
             error: 'Invalid email domain. Please use a real email address from a valid provider (e.g., Gmail, Yahoo, Outlook).',
         });
@@ -183,17 +191,50 @@ router.post('/register', async (req, res) => {
             [normalizedEmail]
         );
         if (existing.length) {
+            console.log('❌ Email already registered:', normalizedEmail);
             return res.status(409).json({
                 error: 'This email is already registered.',
             });
         }
 
+        // ============================================
+        // 🔍 DEBUG: LOG RAW PASSWORD
+        // ============================================
+        console.log('🔍 Password received:', {
+            raw: password,
+            type: typeof password,
+            length: password?.length,
+            trimmed: password?.trim(),
+            trimmedLength: password?.trim()?.length,
+            includesSpecialChars: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+            includesNumbers: /\d/.test(password),
+            includesLetters: /[a-zA-Z]/.test(password),
+        });
+
         // 6. Hash password and insert user
+        console.log('🔐 Hashing password...');
         const passwordHash = await bcrypt.hash(password, 10);
+
+        // ============================================
+        // 🔍 DEBUG: LOG GENERATED HASH
+        // ============================================
+        console.log('🔐 Generated hash:', {
+            hash: passwordHash,
+            length: passwordHash?.length,
+            startsWith: passwordHash?.substring(0, 4),
+            isValidFormat: passwordHash?.startsWith('$2b$'),
+        });
+
         const { rows: result } = await pool.query(
             'INSERT INTO users (fullName, email, passwordHash) VALUES ($1, $2, $3) RETURNING id',
             [fullName.trim(), normalizedEmail, passwordHash]
         );
+
+        console.log('✅ User registered successfully:', {
+            id: result[0].id,
+            email: normalizedEmail,
+            fullName: fullName.trim(),
+        });
 
         const user = {
             id: result[0].id,
@@ -204,7 +245,7 @@ router.post('/register', async (req, res) => {
         const token = createToken(user);
         res.status(201).json({ user, token });
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('❌ Registration error:', error);
         res.status(500).json({
             error: 'Unable to register user. Please try again later.',
         });
@@ -212,12 +253,23 @@ router.post('/register', async (req, res) => {
 });
 
 // ============================================
-// 4. LOGIN ROUTE
+// 4. LOGIN ROUTE (with DEBUG LOGS)
 // ============================================
 router.post('/login', async (req, res) => {
+    console.log('=========================================');
+    console.log('🔑 LOGIN ATTEMPT');
+    console.log('=========================================');
+
     const { email, password } = req.body;
 
+    console.log('📥 Request received:', {
+        email: email,
+        passwordLength: password?.length,
+        passwordType: typeof password,
+    });
+
     if (!email?.trim() || !password) {
+        console.log('❌ Missing email or password');
         return res.status(400).json({
             error: 'Email and password are required.',
         });
@@ -225,6 +277,8 @@ router.post('/login', async (req, res) => {
 
     try {
         const normalizedEmail = email.toLowerCase().trim();
+        console.log('🔍 Looking up user:', normalizedEmail);
+
         const { rows } = await pool.query(
             'SELECT id, fullName, email, passwordHash FROM users WHERE email = $1',
             [normalizedEmail]
@@ -232,32 +286,77 @@ router.post('/login', async (req, res) => {
         const user = rows[0];
 
         if (!user) {
+            console.log('❌ User not found:', normalizedEmail);
             return res.status(401).json({
                 error: 'Invalid email or password.',
             });
         }
 
-        // ✅ Check if user registered via Google OAuth
+        console.log('👤 User found:', {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName,
+            hasHash: !!user.passwordHash,
+            hashLength: user.passwordHash?.length,
+            hashStartsWith: user.passwordHash?.substring(0, 4),
+        });
+
+        // ✅ Check Google OAuth
         if (user.passwordHash === 'google_oauth') {
+            console.log('❌ Google OAuth account detected (password login not allowed)');
             return res.status(401).json({
                 error: 'This account was created with Google. Please use "Continue with Google" to sign in.',
             });
         }
 
-        // Check if passwordHash exists
         if (!user.passwordHash) {
-            console.error('User has no passwordHash set:', user.email);
+            console.log('❌ No passwordHash set for user:', user.email);
             return res.status(401).json({
                 error: 'Invalid email or password.',
             });
         }
 
-        const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+        // ============================================
+        // 🔍 DEBUG: LOG PASSWORD AND HASH BEFORE COMPARE
+        // ============================================
+        console.log('🔍 Comparing credentials:');
+        console.log('  - Password received:', {
+            raw: password,
+            type: typeof password,
+            length: password?.length,
+            trimmed: password?.trim(),
+            trimmedLength: password?.trim()?.length,
+        });
+        console.log('  - Hash from DB:', {
+            hash: user.passwordHash,
+            length: user.passwordHash?.length,
+            startsWith: user.passwordHash?.substring(0, 4),
+            isValid: user.passwordHash?.startsWith('$2b$'),
+        });
+
+        // Try with exact password first
+        let passwordMatches = await bcrypt.compare(password, user.passwordHash);
+        console.log('  - bcrypt.compare (exact password):', passwordMatches);
+
+        // If exact fails, try trimmed password (remove extra spaces)
         if (!passwordMatches) {
+            const trimmedPassword = password.trim();
+            console.log('  - Trying trimmed password:', {
+                trimmed: trimmedPassword,
+                length: trimmedPassword.length,
+            });
+            passwordMatches = await bcrypt.compare(trimmedPassword, user.passwordHash);
+            console.log('  - bcrypt.compare (trimmed password):', passwordMatches);
+        }
+
+        if (!passwordMatches) {
+            console.log('❌ Password does NOT match');
             return res.status(401).json({
                 error: 'Invalid email or password.',
             });
         }
+
+        console.log('✅ Password matches!');
 
         const safeUser = {
             id: user.id,
@@ -266,9 +365,14 @@ router.post('/login', async (req, res) => {
         };
         const token = createToken(safeUser);
 
+        console.log('✅ Login successful:', {
+            user: safeUser,
+            tokenGenerated: !!token,
+        });
+
         res.json({ user: safeUser, token });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({
             error: 'Unable to log in at this time.',
         });
@@ -313,4 +417,4 @@ router.post('/forgot-password', async (req, res) => {
 // ============================================
 // 6. EXPORT
 // ============================================
-export default router;   // ✅ MAKE SURE THIS IS HERE
+export default router;
