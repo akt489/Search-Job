@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || '';  // ✅ No type assertion
 
 function AIChat({ jobId, onClose }) {
     const [messages, setMessages] = useState([
@@ -24,7 +24,7 @@ function AIChat({ jobId, onClose }) {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE}/api/ai/chat`, {
+            const response = await fetch(`${API_BASE}/ai/chat`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -60,9 +60,7 @@ function AIChat({ jobId, onClose }) {
         <div className="ai-chat-container">
             <div className="ai-chat-header">
                 <h3>🤖 JobScout AI</h3>
-                {onClose && (
-                    <button className="close-btn" onClick={onClose}>✕</button>
-                )}
+                <button className="close-btn" onClick={onClose}>✕</button>
             </div>
 
             <div className="ai-chat-messages">
