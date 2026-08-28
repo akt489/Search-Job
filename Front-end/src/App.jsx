@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
+// ─── Components ──────────────────────────────────────────────
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import FloatingChatButton from './components/FloatingChatButton'; // ✅ AI Chat Button
 
+// ─── Pages ──────────────────────────────────────────────────
 import Home from './pages/Home';
 import Jobs from './pages/Jobs';
 import JobDetailsPage from './pages/JobDetailsPage';
@@ -19,34 +22,37 @@ import PostCV from './pages/PostCV';
 import ForgotPassword from './pages/ForgotPassword';
 import AuthCallback from './pages/AuthCallback';
 
+// ─── Styles ──────────────────────────────────────────────────
 import './App.css';
 
+// ─── API Base URL ───────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 function App() {
   const navigate = useNavigate();
 
-  // --- User State ---
+  // ─── User State ──────────────────────────────────────────
   const [user, setUser] = useState(() => {
     const storedUser = window.localStorage.getItem('jobscout-user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
+
   const [token, setToken] = useState(() =>
     window.localStorage.getItem('jobscout-token') || null
   );
 
-  // --- Data State ---
+  // ─── Data State ──────────────────────────────────────────
   const [savedJobs, setSavedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  // --- Theme State ---
+  // ─── Theme State ─────────────────────────────────────────
   const [theme, setTheme] = useState(() => {
     const stored = window.localStorage.getItem('jobscout-theme');
     return stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   });
 
-  // --- Fetch Data When User Logs In ---
+  // ─── Fetch User Data on Login ────────────────────────────
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user || !token) {
@@ -67,9 +73,8 @@ function App() {
 
         if (savedResponse.ok) {
           const savedData = await savedResponse.json();
-          setSavedJobs(savedData.map(job => job.id));
+          setSavedJobs(savedData.map((job) => job.id));
         } else if (savedResponse.status === 401) {
-          // Token expired
           handleLogout();
           return;
         }
@@ -96,13 +101,13 @@ function App() {
     fetchUserData();
   }, [user, token]);
 
-  // --- Theme effect ---
+  // ─── Theme Effect ─────────────────────────────────────────
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     window.localStorage.setItem('jobscout-theme', theme);
   }, [theme]);
 
-  // --- Toggle Save Job ---
+  // ─── Toggle Save Job ──────────────────────────────────────
   const toggleSaveJob = async (jobId) => {
     if (!user || !token) {
       navigate('/login');
@@ -130,16 +135,16 @@ function App() {
       const data = await response.json();
 
       if (data.saved) {
-        setSavedJobs(prev => [...prev, jobId]);
+        setSavedJobs((prev) => [...prev, jobId]);
       } else {
-        setSavedJobs(prev => prev.filter(id => id !== jobId));
+        setSavedJobs((prev) => prev.filter((id) => id !== jobId));
       }
     } catch (error) {
       console.error('Toggle save error:', error);
     }
   };
 
-  // --- Handle Login ---
+  // ─── Handle Login ─────────────────────────────────────────
   const handleLogin = (profile, authToken) => {
     setUser(profile);
     setToken(authToken);
@@ -148,7 +153,7 @@ function App() {
     navigate('/dashboard');
   };
 
-  // --- Handle Register ---
+  // ─── Handle Register ──────────────────────────────────────
   const handleRegister = (profile, authToken) => {
     setUser(profile);
     setToken(authToken);
@@ -157,7 +162,7 @@ function App() {
     navigate('/dashboard');
   };
 
-  // --- Handle Logout ---
+  // ─── Handle Logout ────────────────────────────────────────
   const handleLogout = () => {
     setUser(null);
     setToken(null);
@@ -168,16 +173,17 @@ function App() {
     navigate('/');
   };
 
-  // --- Handle Application Submit ---
+  // ─── Handle Application Submit ────────────────────────────
   const handleApplicationSubmit = (applicationData) => {
-    setApplications(prev => [applicationData, ...prev]);
+    setApplications((prev) => [applicationData, ...prev]);
   };
 
-  // --- Toggle Theme ---
+  // ─── Toggle Theme ─────────────────────────────────────────
   const toggleTheme = () => {
     setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
   };
 
+  // ─── Render ───────────────────────────────────────────────
   return (
     <div className="app-shell">
       <Navbar
@@ -313,6 +319,9 @@ function App() {
       </main>
 
       <Footer />
+
+      {/* ✅ AI Chat Floating Button - Always visible, works with authentication */}
+      <FloatingChatButton />
     </div>
   );
 }
