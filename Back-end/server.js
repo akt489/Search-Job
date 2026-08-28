@@ -13,6 +13,7 @@ import aiRoutes from './routes/aiRoutes.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', true);
 const port = process.env.PORT || 4000;
 
 // --- Security Middleware ---
