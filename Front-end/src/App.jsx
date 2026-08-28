@@ -5,7 +5,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
-import FloatingChatButton from './components/FloatingChatButton'; // ✅ AI Chat Button
+import FloatingChatButton from './components/FloatingChatButton';
 
 // ─── Pages ──────────────────────────────────────────────────
 import Home from './pages/Home';
@@ -21,6 +21,10 @@ import FindCompany from './pages/FindCompany';
 import PostCV from './pages/PostCV';
 import ForgotPassword from './pages/ForgotPassword';
 import AuthCallback from './pages/AuthCallback';
+
+// ─── NEW AI Pages ────────────────────────────────────────────
+import Profile from './pages/Profile';
+import Recommendations from './pages/Recommendations';
 
 // ─── Styles ──────────────────────────────────────────────────
 import './App.css';
@@ -196,6 +200,7 @@ function App() {
 
       <main className="app-main">
         <Routes>
+          {/* Public Routes */}
           <Route
             path="/"
             element={
@@ -227,6 +232,11 @@ function App() {
           />
 
           <Route
+            path="/companies"
+            element={<FindCompany />}
+          />
+
+          <Route
             path="/login"
             element={<Login onLogin={handleLogin} />}
           />
@@ -241,6 +251,17 @@ function App() {
             element={<AuthCallback />}
           />
 
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
+
+          <Route
+            path="/postcv"
+            element={<Navigate to="/post-cv" replace />}
+          />
+
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -276,27 +297,12 @@ function App() {
           />
 
           <Route
-            path="/companies"
-            element={<FindCompany />}
-          />
-
-          <Route
             path="/post-cv"
             element={
               <ProtectedRoute user={user}>
                 <PostCV user={user} token={token} />
               </ProtectedRoute>
             }
-          />
-
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
-
-          <Route
-            path="/postcv"
-            element={<Navigate to="/post-cv" replace />}
           />
 
           <Route
@@ -311,6 +317,26 @@ function App() {
             }
           />
 
+          {/* ─── NEW AI Routes ──────────────────────── */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute user={user}>
+                <Profile user={user} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/recommendations"
+            element={
+              <ProtectedRoute user={user}>
+                <Recommendations user={user} />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 Fallback */}
           <Route
             path="*"
             element={<Navigate to="/" replace />}
@@ -320,7 +346,7 @@ function App() {
 
       <Footer />
 
-      {/* ✅ AI Chat Floating Button - Always visible, works with authentication */}
+      {/* ✅ AI Chat Floating Button */}
       <FloatingChatButton />
     </div>
   );

@@ -10,13 +10,19 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
   return (
     <header className="navbar">
       <div className={open ? 'navbar-inner open' : 'navbar-inner'}>
+        {/* ─── Brand ────────────────────────────────── */}
         <Link to="/" className="brand-link" onClick={closeMenu}>
           <span className="logo-mark">
-            <img src="/favicon.png" alt="SearchJob logo" style={{ borderRadius: '50%' }} />
+            <img
+              src="/favicon.png"
+              alt="SearchJob logo"
+              style={{ borderRadius: '50%', width: '32px', height: '32px' }}
+            />
           </span>
           SearchJob
         </Link>
 
+        {/* ─── Navigation ───────────────────────────── */}
         <div className="nav-layout">
           <nav
             id="primary-navigation"
@@ -26,11 +32,19 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
             <Link to="/" onClick={closeMenu}>Home</Link>
             <Link to="/jobs" onClick={closeMenu}>Jobs</Link>
             <Link to="/companies" onClick={closeMenu}>Companies</Link>
-            <Link to="/saved" onClick={closeMenu}>Saved</Link>
-            <Link to="/dashboard" onClick={closeMenu}>Dashboard</Link>
+
+            {/* Only show saved/dashboard if logged in */}
+            {user && (
+              <>
+                <Link to="/saved" onClick={closeMenu}>Saved</Link>
+                <Link to="/dashboard" onClick={closeMenu}>Dashboard</Link>
+              </>
+            )}
           </nav>
 
+          {/* ─── Actions ────────────────────────────── */}
           <div className="nav-actions">
+            {/* Theme Toggle */}
             <button
               type="button"
               className="button button-tertiary theme-toggle"
@@ -45,6 +59,7 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
             </button>
 
             {!user ? (
+              // ─── Not Logged In ─────────────────
               <>
                 <Link to="/login" className="button button-secondary" onClick={closeMenu}>
                   Login
@@ -54,7 +69,24 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
                 </Link>
               </>
             ) : (
+              // ─── Logged In ─────────────────────
               <>
+                {/* Profile Link */}
+                <Link to="/profile" className="button button-secondary" onClick={closeMenu}>
+                  👤 Profile
+                </Link>
+
+                {/* Recommendations Link */}
+                <Link to="/recommendations" className="button button-primary" onClick={closeMenu}>
+                  ✨ Recommend
+                </Link>
+
+                {/* Saved Jobs Count */}
+                <span className="saved-pill" aria-label={`${savedCount} saved jobs`}>
+                  ❤️ {savedCount}
+                </span>
+
+                {/* Logout */}
                 <button
                   className="button button-secondary"
                   type="button"
@@ -65,14 +97,12 @@ function Navbar({ user, onLogout, savedCount, theme, onToggleTheme }) {
                 >
                   Sign out
                 </button>
-                <span className="saved-pill" aria-label={`${savedCount} saved jobs`}>
-                  Saved {savedCount}
-                </span>
               </>
             )}
           </div>
         </div>
 
+        {/* ─── Mobile Menu Toggle ───────────────────── */}
         <button
           type="button"
           className="menu-toggle"
