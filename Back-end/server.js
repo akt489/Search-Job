@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+
+// ─── Route Imports ──────────────────────────────────────────
 import authRoutes from './routes/authRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
@@ -13,43 +15,42 @@ import aiRoutes from './routes/aiRoutes.js';
 dotenv.config();
 
 const app = express();
-app.set('trust proxy', true);
 const port = process.env.PORT || 4000;
 
-// --- Security Middleware ---
+// ─── 1. TRUST PROXY (Railway) ──────────────────────────────
+app.set('trust proxy', true);
+
+// ─── 2. SECURITY & PARSING ──────────────────────────────────
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- CORS Configuration (Simplified) ---
+// ─── 3. CORS (MUST BE BEFORE ANY ROUTES) ───────────────────
 const allowedOrigins = [
     'http://localhost:5173',
+    'http://localhost:3000',
     'https://confident-wisdom-production-2fb8.up.railway.app',
+    'https://searchjob-frontend.up.railway.app',
     process.env.CLIENT_ORIGIN,
 ].filter(Boolean);
 
-app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin) || !origin) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
 
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.warn(`Blocked CORS request from origin: ${origin}`);
-            callback(null, false); // Instead of error, just deny
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
-}));
+    // Handle preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
-// --- Handle preflight OPTIONS requests explicitly ---
-app.options('*', cors());
-
-// --- Rate Limiting ---
+// ─── 4. RATE LIMITING ──────────────────────────────────────
 const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 120,
@@ -57,7 +58,7 @@ const apiLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// Routes
+// ─── 5. ROUTES ──────────────────────────────────────────────
 app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', googleAuthRoutes);
@@ -65,13 +66,16 @@ app.use('/api/users', usersRoutes);
 app.use('/api/upload-cv', uploadRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/ai', aiRoutes);
-// --- Health Check ---
+
+// ─── 6. HEALTH CHECK ────────────────────────────────────────
 app.get('/', (req, res) => {
     res.json({ message: 'Search Job backend is running.' });
 });
 
-// --- Start Server ---
+// ─── 7. START SERVER ────────────────────────────────────────
 app.listen(port, () => {
-    console.log(`Backend listening on http://localhost:${port}`);
-    console.log(`Allowed origins:`, allowedOrigins);
+    console.log(`✅ Backend listening on http://localhost:${port}`);
+    console.log(`📋 Allowed origins:`, allowedOrigins);
 });
+
+export default app;
