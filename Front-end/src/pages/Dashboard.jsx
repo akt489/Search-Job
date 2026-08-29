@@ -1,71 +1,150 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import DashboardSidebar from '../components/DashboardSidebar';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import DashboardSidebar from "../components/DashboardSidebar";
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import {
+    Search,
+    FileText,
+    BriefcaseBusiness,
+    Bookmark,
+    UserRound,
+    Sparkles,
+    TrendingUp,
+    Target,
+    ArrowRight,
+    BrainCircuit,
+    CheckCircle2,
+    Circle,
+    Clock3,
+    BarChart3,
+    ChevronRight,
+    Send,
+} from "lucide-react";
+
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
 function Dashboard({ user, savedCount, applicationCount }) {
     const navigate = useNavigate();
+
     const [profileStrength, setProfileStrength] = useState({
         percentage: 0,
         breakdown: [],
-        reasoning: '',
+        reasoning: "",
         isLoading: true,
     });
+
     const [recentActivity, setRecentActivity] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // ─── Fetch AI Profile Strength ──────────────────────────
     useEffect(() => {
         const fetchProfileStrength = async () => {
             try {
-                const token = localStorage.getItem('jobscout-token');
+                const token = localStorage.getItem("jobscout-token");
                 if (!token) return;
 
-                // Get user profile
                 const profileRes = await fetch(`${API_BASE}/ai/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
 
                 let profileData = {};
+
                 if (profileRes.ok) {
                     profileData = await profileRes.json();
                 }
 
-                // Calculate profile strength
                 const items = [
-                    { label: 'Profile Photo', weight: 10, completed: !!user?.avatar },
-                    { label: 'Full Name', weight: 10, completed: !!user?.fullName },
-                    { label: 'Professional Title', weight: 10, completed: !!profileData?.title },
-                    { label: 'Bio / About', weight: 15, completed: !!profileData?.bio && profileData.bio.length > 20 },
-                    { label: 'Skills', weight: 15, completed: profileData?.skills?.length > 0 },
-                    { label: 'Location', weight: 10, completed: !!profileData?.location },
-                    { label: 'Experience', weight: 15, completed: profileData?.experience?.length > 0 },
-                    { label: 'Education', weight: 10, completed: profileData?.education_items?.length > 0 },
-                    { label: 'Resume Uploaded', weight: 5, completed: false }, // We'll need to check this
+                    {
+                        label: "Profile Photo",
+                        weight: 10,
+                        completed: !!user?.avatar,
+                    },
+                    {
+                        label: "Full Name",
+                        weight: 10,
+                        completed: !!user?.fullName,
+                    },
+                    {
+                        label: "Professional Title",
+                        weight: 10,
+                        completed: !!profileData?.title,
+                    },
+                    {
+                        label: "Bio / About",
+                        weight: 15,
+                        completed:
+                            !!profileData?.bio &&
+                            profileData.bio.length > 20,
+                    },
+                    {
+                        label: "Skills",
+                        weight: 15,
+                        completed: profileData?.skills?.length > 0,
+                    },
+                    {
+                        label: "Location",
+                        weight: 10,
+                        completed: !!profileData?.location,
+                    },
+                    {
+                        label: "Experience",
+                        weight: 15,
+                        completed: profileData?.experience?.length > 0,
+                    },
+                    {
+                        label: "Education",
+                        weight: 10,
+                        completed:
+                            profileData?.education_items?.length > 0,
+                    },
+                    {
+                        label: "Resume Uploaded",
+                        weight: 5,
+                        completed: false,
+                    },
                 ];
 
-                const completedWeight = items.reduce((sum, item) => sum + (item.completed ? item.weight : 0), 0);
-                const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-                const percentage = Math.min(100, Math.round((completedWeight / totalWeight) * 100));
+                const completedWeight = items.reduce(
+                    (sum, item) =>
+                        sum + (item.completed ? item.weight : 0),
+                    0
+                );
 
-                const breakdown = items.map(item => ({
+                const totalWeight = items.reduce(
+                    (sum, item) => sum + item.weight,
+                    0
+                );
+
+                const percentage = Math.min(
+                    100,
+                    Math.round((completedWeight / totalWeight) * 100)
+                );
+
+                const breakdown = items.map((item) => ({
                     ...item,
-                    status: item.completed ? 'completed' : 'pending',
+                    status: item.completed
+                        ? "completed"
+                        : "pending",
                 }));
 
-                // Get AI reasoning (call AI for personalized insight)
                 let reasoning = `Your profile is ${percentage}% complete. `;
-                reasoning += percentage >= 80
-                    ? "You're profile is looking great! You're ready to attract top employers."
-                    : percentage >= 50
-                        ? "You're on the right track. Add more details to stand out to recruiters."
-                        : "Complete your profile to get noticed by top companies and increase your match rate.";
 
-                // Add specific recommendations
-                const missingItems = items.filter(item => !item.completed).slice(0, 3);
+                reasoning +=
+                    percentage >= 80
+                        ? "Your profile is looking strong and ready to attract opportunities."
+                        : percentage >= 50
+                            ? "You're making great progress. A few improvements could significantly increase your visibility."
+                            : "Complete more of your profile to improve your recommendations and job matches.";
+
+                const missingItems = items
+                    .filter((item) => !item.completed)
+                    .slice(0, 3);
+
                 if (missingItems.length > 0) {
-                    reasoning += ` Consider adding: ${missingItems.map(i => i.label).join(', ')}.`;
+                    reasoning += ` Focus on: ${missingItems
+                        .map((item) => item.label)
+                        .join(", ")}.`;
                 }
 
                 setProfileStrength({
@@ -75,24 +154,37 @@ function Dashboard({ user, savedCount, applicationCount }) {
                     isLoading: false,
                 });
 
-                // ─── Fetch Recent Activity ────────────────────
-                const activityRes = await fetch(`${API_BASE}/jobs/history`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                });
+                const activityRes = await fetch(
+                    `${API_BASE}/jobs/history`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
 
                 if (activityRes.ok) {
                     const history = await activityRes.json();
-                    const activities = history.slice(0, 5).map(app => ({
-                        text: `Applied to "${app.title}" at ${app.company}`,
-                        time: new Date(app.created_at).toLocaleDateString(),
-                        status: app.status || 'submitted',
-                    }));
+
+                    const activities = history
+                        .slice(0, 5)
+                        .map((app) => ({
+                            text: `Applied to "${app.title}" at ${app.company}`,
+                            time: new Date(
+                                app.created_at
+                            ).toLocaleDateString(),
+                            status: app.status || "submitted",
+                        }));
+
                     setRecentActivity(activities);
                 }
-
             } catch (error) {
-                console.error('Dashboard data error:', error);
-                setProfileStrength(prev => ({ ...prev, isLoading: false }));
+                console.error("Dashboard data error:", error);
+
+                setProfileStrength((prev) => ({
+                    ...prev,
+                    isLoading: false,
+                }));
             } finally {
                 setLoading(false);
             }
@@ -101,193 +193,529 @@ function Dashboard({ user, savedCount, applicationCount }) {
         fetchProfileStrength();
     }, [user]);
 
-    // ─── Helper Functions ────────────────────────────────────
     const getStatusColor = (status) => {
         const colors = {
-            applied: 'status-applied',
-            submitted: 'status-submitted',
-            interview: 'status-interview',
-            under_review: 'status-under-review',
-            rejected: 'status-rejected',
-            offer: 'status-offer',
-            accepted: 'status-accepted',
+            applied: "status-applied",
+            submitted: "status-submitted",
+            interview: "status-interview",
+            under_review: "status-under-review",
+            rejected: "status-rejected",
+            offer: "status-offer",
+            accepted: "status-accepted",
         };
-        return colors[status?.toLowerCase().replace(' ', '_')] || 'status-submitted';
+
+        return (
+            colors[
+            status?.toLowerCase().replace(" ", "_")
+            ] || "status-submitted"
+        );
     };
 
     const getStatusLabel = (status) => {
-        if (!status) return 'Submitted';
-        return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+        if (!status) return "Submitted";
+
+        return (
+            status.charAt(0).toUpperCase() +
+            status.slice(1).replace("_", " ")
+        );
     };
 
-    // ─── Loading State ──────────────────────────────────────
     if (loading || profileStrength.isLoading) {
         return (
             <div className="page-content page-dashboard">
                 <div className="dashboard-loading">
-                    <div className="skeleton" style={{ height: '180px', marginBottom: '24px' }} />
-                    <div className="skeleton" style={{ height: '120px', marginBottom: '16px' }} />
-                    <div className="skeleton" style={{ height: '200px' }} />
+                    <div className="skeleton skeleton-hero" />
+                    <div className="skeleton-grid">
+                        <div className="skeleton skeleton-stat" />
+                        <div className="skeleton skeleton-stat" />
+                        <div className="skeleton skeleton-stat" />
+                    </div>
+                    <div className="skeleton skeleton-large" />
                 </div>
             </div>
         );
     }
 
-    // ─── Render ──────────────────────────────────────────────
+    const firstName =
+        user?.fullName?.split(" ")[0] || "there";
+
+    const completedItems =
+        profileStrength.breakdown.filter(
+            (item) => item.status === "completed"
+        ).length;
+
     return (
         <div className="page-content page-dashboard">
             <div className="dashboard-container">
-                {/* ─── Sidebar ───────────────────────────────────── */}
+
                 <DashboardSidebar user={user} />
 
-                {/* ─── Main Content ─────────────────────────────── */}
-                <div className="dashboard-main">
-                    {/* ─── Welcome Section ───────────────────────── */}
-                    <section className="dashboard-overview glass-card">
-                        <div className="welcome-text">
-                            <p className="eyebrow">Dashboard</p>
-                            <h1>Welcome back, {user?.fullName || 'User'} 👋</h1>
-                            <p>Track your job search progress, recent activity, and quick actions in one place.</p>
-                        </div>
-                        <div className="dashboard-actions">
-                            <button className="button button-primary" onClick={() => navigate('/jobs')}>
-                                🔍 Browse Jobs
-                            </button>
-                            <button className="button button-secondary" onClick={() => navigate('/post-cv')}>
-                                📄 Post CV
-                            </button>
-                            <button className="button button-tertiary" onClick={() => navigate('/history')}>
-                                📋 Applications
-                            </button>
-                        </div>
-                    </section>
+                <main className="dashboard-main">
 
-                    {/* ─── Stats Grid ────────────────────────────── */}
-                    <section className="dashboard-stats-grid">
-                        <article className="stat-card glass-card">
-                            <div className="stat-icon">💼</div>
-                            <div className="stat-content">
-                                <span className="stat-label">Saved Jobs</span>
-                                <span className="stat-value">{savedCount}</span>
+                    {/* HERO */}
+                    <section className="dashboard-hero">
+                        <div className="hero-content">
+
+                            <div className="hero-badge">
+                                <Sparkles size={15} />
+                                <span>YOUR CAREER DASHBOARD</span>
                             </div>
-                        </article>
-                        <article className="stat-card glass-card">
-                            <div className="stat-icon">📨</div>
-                            <div className="stat-content">
-                                <span className="stat-label">Applications</span>
-                                <span className="stat-value">{applicationCount}</span>
-                            </div>
-                        </article>
-                        <article className="stat-card glass-card">
-                            <div className="stat-icon">👀</div>
-                            <div className="stat-content">
-                                <span className="stat-label">Profile Views</span>
-                                <span className="stat-value">{Math.floor(Math.random() * 50) + 10}</span>
-                            </div>
-                        </article>
-                    </section>
 
-                    {/* ─── Profile Strength ──────────────────────── */}
-                    <section className="profile-strength-card glass-card">
-                        <div className="strength-header">
-                            <h2>📊 Profile Strength</h2>
-                            <span className="strength-score">{profileStrength.percentage}%</span>
+                            <h1>
+                                Good to see you,
+                                <span> {firstName}</span>
+                            </h1>
+
+                            <p>
+                                Your personalized workspace for discovering
+                                opportunities, tracking progress, and growing
+                                your career.
+                            </p>
+
+                            <div className="hero-actions">
+                                <button
+                                    className="hero-primary-btn"
+                                    onClick={() => navigate("/jobs")}
+                                >
+                                    <Search size={18} />
+                                    Explore Jobs
+                                    <ArrowRight size={17} />
+                                </button>
+
+                                <button
+                                    className="hero-secondary-btn"
+                                    onClick={() => navigate("/ai-chat")}
+                                >
+                                    <BrainCircuit size={18} />
+                                    Ask Career AI
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="strength-bar">
-                            <div
-                                className="strength-fill"
-                                style={{ width: `${profileStrength.percentage}%` }}
-                            />
-                        </div>
+                        <div className="hero-visual">
 
-                        <p className="strength-reasoning">{profileStrength.reasoning}</p>
+                            <div className="hero-orb orb-one" />
+                            <div className="hero-orb orb-two" />
 
-                        <div className="strength-breakdown">
-                            {profileStrength.breakdown.map((item, index) => (
-                                <div key={index} className="strength-item">
-                                    <span className={`strength-dot ${item.status}`} />
-                                    <span className="strength-label">{item.label}</span>
-                                    <span className="strength-weight">{item.weight}%</span>
+                            <div className="hero-ai-card">
+                                <div className="ai-card-icon">
+                                    <BrainCircuit size={28} />
                                 </div>
-                            ))}
-                        </div>
 
-                        <button
-                            className="button button-secondary small-button"
-                            onClick={() => navigate('/profile')}
-                        >
-                            ✏️ Improve Your Profile
-                        </button>
+                                <div>
+                                    <span>AI Career Assistant</span>
+                                    <strong>Ready to help you grow</strong>
+                                </div>
+
+                                <div className="ai-status">
+                                    <span />
+                                    Online
+                                </div>
+                            </div>
+
+                        </div>
                     </section>
 
-                    {/* ─── Recent Activity ────────────────────────── */}
-                    <section className="activity-card glass-card">
-                        <div className="activity-header">
-                            <h2>📋 Recent Activity</h2>
-                            <span className="activity-updated">Updated moments ago</span>
-                        </div>
 
-                        {recentActivity.length === 0 ? (
-                            <div className="empty-state-mini">
-                                <p>No recent activity yet. Start applying to jobs!</p>
-                            </div>
-                        ) : (
-                            <div className="activity-list">
-                                {recentActivity.map((activity, index) => (
-                                    <div key={index} className="activity-item">
-                                        <div className="activity-left">
-                                            <span className={`activity-status-dot ${getStatusColor(activity.status)}`} />
-                                            <p className="activity-text">{activity.text}</p>
-                                        </div>
-                                        <div className="activity-right">
-                                            <span className={`status-pill ${getStatusColor(activity.status)}`}>
-                                                {getStatusLabel(activity.status)}
-                                            </span>
-                                            <span className="activity-time">{activity.time}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    {/* STATS */}
+                    <section className="dashboard-stats-grid">
 
-                        {recentActivity.length > 0 && (
+                        <article className="premium-stat-card">
+                            <div className="stat-icon-wrapper blue">
+                                <Bookmark size={21} />
+                            </div>
+
+                            <div className="stat-info">
+                                <span>Saved Jobs</span>
+                                <strong>{savedCount || 0}</strong>
+                                <small>
+                                    Opportunities you saved
+                                </small>
+                            </div>
+
+                            <ChevronRight className="stat-arrow" size={18} />
+                        </article>
+
+
+                        <article className="premium-stat-card">
+                            <div className="stat-icon-wrapper purple">
+                                <Send size={21} />
+                            </div>
+
+                            <div className="stat-info">
+                                <span>Applications</span>
+                                <strong>{applicationCount || 0}</strong>
+                                <small>
+                                    Track your applications
+                                </small>
+                            </div>
+
+                            <ChevronRight className="stat-arrow" size={18} />
+                        </article>
+
+
+                        <article className="premium-stat-card">
+                            <div className="stat-icon-wrapper green">
+                                <Target size={21} />
+                            </div>
+
+                            <div className="stat-info">
+                                <span>Profile Score</span>
+                                <strong>
+                                    {profileStrength.percentage}%
+                                </strong>
+                                <small>
+                                    Keep improving your profile
+                                </small>
+                            </div>
+
+                            <ChevronRight className="stat-arrow" size={18} />
+                        </article>
+
+                    </section>
+
+
+                    {/* AI INSIGHT + PROFILE */}
+                    <section className="dashboard-insights-grid">
+
+                        {/* AI INSIGHT */}
+                        <article className="ai-insight-card">
+
+                            <div className="insight-top">
+
+                                <div className="insight-icon">
+                                    <Sparkles size={22} />
+                                </div>
+
+                                <div>
+                                    <span className="section-eyebrow">
+                                        AI POWERED INSIGHT
+                                    </span>
+
+                                    <h2>Your Career Insight</h2>
+                                </div>
+
+                            </div>
+
+                            <p className="ai-insight-text">
+                                {profileStrength.percentage >= 80
+                                    ? "Your profile is looking strong. Continue applying to relevant opportunities and use AI recommendations to discover your best matches."
+                                    : "Complete your professional profile to unlock better AI recommendations and increase your chances of matching with relevant opportunities."}
+                            </p>
+
+                            <div className="insight-recommendation">
+                                <TrendingUp size={19} />
+
+                                <div>
+                                    <strong>Recommended next step</strong>
+                                    <span>
+                                        Improve your profile to increase your
+                                        career match accuracy.
+                                    </span>
+                                </div>
+                            </div>
+
                             <button
-                                className="button button-tertiary small-button"
-                                onClick={() => navigate('/history')}
+                                className="insight-button"
+                                onClick={() => navigate("/ai-chat")}
                             >
-                                View All Applications →
+                                Talk to Career AI
+                                <ArrowRight size={17} />
                             </button>
-                        )}
+
+                        </article>
+
+
+                        {/* PROFILE STRENGTH */}
+                        <article className="profile-strength-modern">
+
+                            <div className="strength-top">
+                                <div>
+                                    <span className="section-eyebrow">
+                                        PROFILE PROGRESS
+                                    </span>
+
+                                    <h2>Profile Strength</h2>
+                                </div>
+
+                                <BarChart3 size={22} />
+                            </div>
+
+
+                            <div className="strength-main">
+
+                                <div
+                                    className="progress-ring"
+                                    style={{
+                                        "--progress":
+                                            `${profileStrength.percentage * 3.6}deg`,
+                                    }}
+                                >
+                                    <div className="progress-ring-inner">
+                                        <strong>
+                                            {profileStrength.percentage}%
+                                        </strong>
+                                        <span>Complete</span>
+                                    </div>
+                                </div>
+
+
+                                <div className="strength-summary">
+                                    <strong>
+                                        {completedItems} of{" "}
+                                        {profileStrength.breakdown.length}
+                                    </strong>
+
+                                    <span>
+                                        Profile sections completed
+                                    </span>
+
+                                    <button
+                                        onClick={() =>
+                                            navigate("/profile")
+                                        }
+                                    >
+                                        Improve Profile
+                                        <ArrowRight size={15} />
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </article>
+
                     </section>
 
-                    {/* ─── Quick Actions ──────────────────────────── */}
-                    <section className="quick-actions-card glass-card">
-                        <h2>⚡ Quick Actions</h2>
-                        <div className="quick-actions-grid">
-                            <button className="quick-action" onClick={() => navigate('/recommendations')}>
-                                <span className="action-emoji">✨</span>
-                                <span className="action-label">AI Recommendations</span>
-                                <span className="action-desc">Discover jobs matched to you</span>
-                            </button>
-                            <button className="quick-action" onClick={() => navigate('/profile')}>
-                                <span className="action-emoji">👤</span>
-                                <span className="action-label">Update Profile</span>
-                                <span className="action-desc">Improve your match rate</span>
-                            </button>
-                            <button className="quick-action" onClick={() => navigate('/post-cv')}>
-                                <span className="action-emoji">📄</span>
-                                <span className="action-label">Upload CV</span>
-                                <span className="action-desc">Get noticed by employers</span>
-                            </button>
-                            <button className="quick-action" onClick={() => navigate('/saved')}>
-                                <span className="action-emoji">❤️</span>
-                                <span className="action-label">Saved Jobs</span>
-                                <span className="action-desc">Review your saved roles</span>
+
+                    {/* PROFILE CHECKLIST */}
+                    <section className="profile-checklist-card">
+
+                        <div className="section-header">
+                            <div>
+                                <span className="section-eyebrow">
+                                    PROFILE CHECKLIST
+                                </span>
+
+                                <h2>
+                                    Complete your professional profile
+                                </h2>
+                            </div>
+
+                            <button
+                                onClick={() => navigate("/profile")}
+                            >
+                                View Profile
+                                <ArrowRight size={16} />
                             </button>
                         </div>
+
+
+                        <div className="checklist-grid">
+
+                            {profileStrength.breakdown.map(
+                                (item, index) => (
+                                    <div
+                                        key={index}
+                                        className={`checklist-item ${item.status
+                                            }`}
+                                    >
+
+                                        {item.status === "completed" ? (
+                                            <CheckCircle2 size={19} />
+                                        ) : (
+                                            <Circle size={19} />
+                                        )}
+
+                                        <span>{item.label}</span>
+
+                                    </div>
+                                )
+                            )}
+
+                        </div>
+
                     </section>
-                </div>
+
+
+                    {/* RECENT ACTIVITY */}
+                    <section className="dashboard-bottom-grid">
+
+                        <article className="activity-card-modern">
+
+                            <div className="section-header">
+
+                                <div>
+                                    <span className="section-eyebrow">
+                                        ACTIVITY
+                                    </span>
+
+                                    <h2>Recent Applications</h2>
+                                </div>
+
+                                <button
+                                    onClick={() =>
+                                        navigate("/history")
+                                    }
+                                >
+                                    View All
+                                    <ArrowRight size={16} />
+                                </button>
+
+                            </div>
+
+
+                            {recentActivity.length === 0 ? (
+
+                                <div className="modern-empty-state">
+
+                                    <div className="empty-icon">
+                                        <BriefcaseBusiness size={28} />
+                                    </div>
+
+                                    <h3>No activity yet</h3>
+
+                                    <p>
+                                        Start exploring opportunities and your
+                                        application activity will appear here.
+                                    </p>
+
+                                    <button
+                                        onClick={() =>
+                                            navigate("/jobs")
+                                        }
+                                    >
+                                        Explore Jobs
+                                    </button>
+
+                                </div>
+
+                            ) : (
+
+                                <div className="modern-activity-list">
+
+                                    {recentActivity.map(
+                                        (activity, index) => (
+
+                                            <div
+                                                key={index}
+                                                className="modern-activity-item"
+                                            >
+
+                                                <div className="activity-icon">
+                                                    <BriefcaseBusiness size={18} />
+                                                </div>
+
+                                                <div className="activity-info">
+                                                    <p>{activity.text}</p>
+
+                                                    <span>
+                                                        <Clock3 size={13} />
+                                                        {activity.time}
+                                                    </span>
+                                                </div>
+
+                                                <span
+                                                    className={`status-pill ${getStatusColor(
+                                                        activity.status
+                                                    )}`}
+                                                >
+                                                    {getStatusLabel(
+                                                        activity.status
+                                                    )}
+                                                </span>
+
+                                            </div>
+
+                                        )
+                                    )}
+
+                                </div>
+
+                            )}
+
+                        </article>
+
+
+                        {/* QUICK ACTIONS */}
+                        <article className="quick-actions-modern">
+
+                            <div>
+                                <span className="section-eyebrow">
+                                    QUICK ACCESS
+                                </span>
+
+                                <h2>Continue your journey</h2>
+                            </div>
+
+
+                            <div className="quick-action-list">
+
+                                <button
+                                    onClick={() =>
+                                        navigate("/recommendations")
+                                    }
+                                >
+                                    <div className="quick-icon purple">
+                                        <Sparkles size={20} />
+                                    </div>
+
+                                    <div>
+                                        <strong>AI Recommendations</strong>
+                                        <span>
+                                            Discover jobs matched to you
+                                        </span>
+                                    </div>
+
+                                    <ArrowRight size={18} />
+                                </button>
+
+
+                                <button
+                                    onClick={() =>
+                                        navigate("/profile")
+                                    }
+                                >
+                                    <div className="quick-icon blue">
+                                        <UserRound size={20} />
+                                    </div>
+
+                                    <div>
+                                        <strong>Update Profile</strong>
+                                        <span>
+                                            Improve your professional profile
+                                        </span>
+                                    </div>
+
+                                    <ArrowRight size={18} />
+                                </button>
+
+
+                                <button
+                                    onClick={() =>
+                                        navigate("/post-cv")
+                                    }
+                                >
+                                    <div className="quick-icon orange">
+                                        <FileText size={20} />
+                                    </div>
+
+                                    <div>
+                                        <strong>Upload CV</strong>
+                                        <span>
+                                            Make your profile more complete
+                                        </span>
+                                    </div>
+
+                                    <ArrowRight size={18} />
+                                </button>
+
+                            </div>
+
+                        </article>
+
+                    </section>
+
+                </main>
             </div>
         </div>
     );

@@ -1,233 +1,865 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
-import SearchBar from '../components/SearchBar';
+import {
+    useMemo,
+    useState,
+    useEffect,
+    useCallback,
+} from "react";
+import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+import SearchBar from "../components/SearchBar";
+
+import {
+    Building2,
+    MapPin,
+    Globe,
+    Mail,
+    Search,
+    BriefcaseBusiness,
+    ArrowRight,
+    SlidersHorizontal,
+    X,
+    ExternalLink,
+    Sparkles,
+    Users,
+    ChevronRight,
+} from "lucide-react";
+
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:4000/api";
 
 function FindCompany() {
-    const [companies, setCompanies] = useState([]);
-    const [locations, setLocations] = useState(['All']);
+    const navigate = useNavigate();
+
+    const [jobs, setJobs] = useState([]);
+    const [locations, setLocations] = useState(["All"]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [searchInput, setSearchInput] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [locationFilter, setLocationFilter] = useState('All');
+    const [searchInput, setSearchInput] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [locationFilter, setLocationFilter] =
+        useState("All");
 
-    // ─── Fetch Locations ──────────────────────────────────────
+    /* ===============================
+       FETCH LOCATIONS
+    =============================== */
+
     useEffect(() => {
         const fetchLocations = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/jobs/locations`);
-                if (!res.ok) throw new Error('Failed to load locations');
+                const res = await fetch(
+                    `${API_BASE_URL}/jobs/locations`
+                );
+
+                if (!res.ok) {
+                    throw new Error(
+                        "Failed to load locations"
+                    );
+                }
+
                 const data = await res.json();
-                setLocations(['All', ...(Array.isArray(data) ? data : [])]);
+
+                setLocations([
+                    "All",
+                    ...(Array.isArray(data) ? data : []),
+                ]);
             } catch (err) {
-                console.error('Location fetch error:', err);
-                setLocations(['All']);
+                console.error(
+                    "Location fetch error:",
+                    err
+                );
+
+                setLocations(["All"]);
             }
         };
+
         fetchLocations();
     }, []);
 
-    // ─── Fetch Companies ──────────────────────────────────────
-    useEffect(() => {
-        const fetchCompanies = async () => {
+    /* ===============================
+       FETCH JOBS / COMPANIES
+    =============================== */
+
+    const fetchCompanies = useCallback(
+        async () => {
             try {
                 setLoading(true);
-                const params = new URLSearchParams();
-                if (searchQuery) params.append('search', searchQuery);
-                if (locationFilter !== 'All') params.append('location', locationFilter);
 
-                const url = `${API_BASE_URL}/jobs?${params.toString()}`;
+                const params = new URLSearchParams();
+
+                if (searchQuery) {
+                    params.append(
+                        "search",
+                        searchQuery
+                    );
+                }
+
+                if (locationFilter !== "All") {
+                    params.append(
+                        "location",
+                        locationFilter
+                    );
+                }
+
+                const url =
+                    `${API_BASE_URL}/jobs?${params.toString()}`;
+
                 const res = await fetch(url);
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+                if (!res.ok) {
+                    throw new Error(
+                        `Failed to load companies`
+                    );
+                }
+
                 const data = await res.json();
-                setCompanies(Array.isArray(data) ? data : []);
+
+                setJobs(
+                    Array.isArray(data) ? data : []
+                );
+
                 setError(null);
             } catch (err) {
+                console.error(err);
+
                 setError(err.message);
-                setCompanies([]);
+
+                setJobs([]);
             } finally {
                 setLoading(false);
             }
-        };
+        },
+        [searchQuery, locationFilter]
+    );
 
+    useEffect(() => {
         fetchCompanies();
-    }, [searchQuery, locationFilter]);
+    }, [fetchCompanies]);
 
-    // ─── Debounce Search ──────────────────────────────────────
+    /* ===============================
+       DEBOUNCE SEARCH
+    =============================== */
+
     useEffect(() => {
         const timer = setTimeout(() => {
-            setSearchQuery(searchInput.trim());
+            setSearchQuery(
+                searchInput.trim()
+            );
         }, 400);
-        return () => clearTimeout(timer);
+
+        return () =>
+            clearTimeout(timer);
     }, [searchInput]);
 
-    const handleSearchChange = (event) => {
-        setSearchInput(event.target.value);
+    /* ===============================
+       GROUP JOBS BY COMPANY
+    =============================== */
+
+    const companies = useMemo(() => {
+        const companyMap = new Map();
+
+        jobs.forEach((job) => {
+            const companyName =
+                job.company?.trim() ||
+                "Unknown Company";
+
+            if (!companyMap.has(companyName)) {
+                companyMap.set(companyName, {
+                    id:
+                        job.company_id ||
+                        companyName
+                            .toLowerCase()
+                            .replace(/\s+/g, "-"),
+
+                    name: companyName,
+
+                    location:
+                        job.location ||
+                        "Location not specified",
+
+                    category:
+                        job.category ||
+                        job.type ||
+                        "Company",
+
+                    description:
+                        job.description ||
+                        "Explore career opportunities and learn more about this organization.",
+
+                    website:
+                        job.website ||
+                        null,
+
+                    contact:
+                        job.contact ||
+                        null,
+
+                    remote:
+                        job.remote ||
+                        false,
+
+                    jobs: [],
+
+                    jobCount: 0,
+                });
+            }
+
+            const company =
+                companyMap.get(companyName);
+
+            company.jobs.push(job);
+            company.jobCount += 1;
+
+            if (
+                !company.website &&
+                job.website
+            ) {
+                company.website =
+                    job.website;
+            }
+
+            if (
+                !company.contact &&
+                job.contact
+            ) {
+                company.contact =
+                    job.contact;
+            }
+        });
+
+        return Array.from(
+            companyMap.values()
+        );
+    }, [jobs]);
+
+    /* ===============================
+       HANDLERS
+    =============================== */
+
+    const handleSearchChange = (
+        event
+    ) => {
+        setSearchInput(
+            event.target.value
+        );
     };
 
-    const handleSearchSubmit = (event) => {
+    const handleSearchSubmit = (
+        event
+    ) => {
         event.preventDefault();
-        setSearchQuery(searchInput.trim());
+
+        setSearchQuery(
+            searchInput.trim()
+        );
     };
 
-    // ─── Render ──────────────────────────────────────────────
+    const clearFilters = () => {
+        setSearchInput("");
+        setSearchQuery("");
+        setLocationFilter("All");
+    };
+
+    const getCompanyInitials = (
+        name
+    ) => {
+        return name
+            .split(" ")
+            .slice(0, 2)
+            .map((word) =>
+                word.charAt(0)
+            )
+            .join("")
+            .toUpperCase();
+    };
+
+    const getCompanyColor = (
+        name
+    ) => {
+        const colors = [
+            "company-color-blue",
+            "company-color-purple",
+            "company-color-green",
+            "company-color-orange",
+            "company-color-pink",
+        ];
+
+        const index =
+            name.length % colors.length;
+
+        return colors[index];
+    };
+
     return (
         <div className="page-content page-companies">
-            {/* ─── Hero Section ─────────────────────────────────── */}
-            <section className="companies-hero glass-card">
-                <div className="hero-content">
-                    <div className="hero-badge">🏢 Find Your Next Company</div>
-                    <h1>Discover Top Employers</h1>
-                    <p className="hero-description">
-                        Search, compare, and connect with hiring teams across leading companies in Ethiopia and beyond.
+
+            {/* ================= HERO ================= */}
+
+            <section className="companies-hero-modern">
+
+                <div className="companies-hero-glow glow-one" />
+                <div className="companies-hero-glow glow-two" />
+
+                <div className="companies-hero-content">
+
+                    <div className="companies-eyebrow">
+                        <Sparkles size={15} />
+                        DISCOVER EMPLOYERS
+                    </div>
+
+                    <h1>
+                        Find companies where
+                        <span> your career can grow.</span>
+                    </h1>
+
+                    <p>
+                        Explore companies, discover
+                        opportunities, and connect with
+                        organizations looking for talent
+                        like you.
                     </p>
+
+                    <div className="hero-company-actions">
+
+                        <button
+                            onClick={() =>
+                                document
+                                    .querySelector(
+                                        ".company-search-section"
+                                    )
+                                    ?.scrollIntoView({
+                                        behavior: "smooth",
+                                    })
+                            }
+                            className="hero-explore-btn"
+                        >
+                            <Search size={18} />
+                            Explore Companies
+                            <ArrowRight size={17} />
+                        </button>
+
+                    </div>
+
                 </div>
-                <div className="hero-stats">
-                    <div className="stat-item">
-                        <span className="stat-number">{companies.length}+</span>
-                        <span className="stat-label">Active Employers</span>
+
+
+                {/* HERO STATS */}
+
+                <div className="companies-hero-stats">
+
+                    <div className="hero-stat-card">
+
+                        <div className="hero-stat-icon blue">
+                            <Building2 size={20} />
+                        </div>
+
+                        <div>
+                            <strong>
+                                {companies.length}
+                            </strong>
+
+                            <span>
+                                Active Companies
+                            </span>
+                        </div>
+
                     </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-number">{locations.length - 1}</span>
-                        <span className="stat-label">Locations</span>
+
+
+                    <div className="hero-stat-card">
+
+                        <div className="hero-stat-icon purple">
+                            <MapPin size={20} />
+                        </div>
+
+                        <div>
+                            <strong>
+                                {locations.length - 1}
+                            </strong>
+
+                            <span>
+                                Locations
+                            </span>
+                        </div>
+
                     </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-number">⭐ 4.8</span>
-                        <span className="stat-label">Average Rating</span>
+
+
+                    <div className="hero-stat-card">
+
+                        <div className="hero-stat-icon green">
+                            <BriefcaseBusiness
+                                size={20}
+                            />
+                        </div>
+
+                        <div>
+                            <strong>
+                                {jobs.length}
+                            </strong>
+
+                            <span>
+                                Open Opportunities
+                            </span>
+                        </div>
+
                     </div>
+
                 </div>
+
             </section>
 
-            {/* ─── Search & Filter ─────────────────────────────── */}
-            <div className="company-search-panel glass-card">
-                <SearchBar
-                    value={searchInput}
-                    onChange={handleSearchChange}
-                    onSubmit={handleSearchSubmit}
-                    placeholder="Search companies, industries, or locations..."
-                />
-                <div className="company-filters">
-                    <label htmlFor="company-location">📍 Location</label>
-                    <select
-                        id="company-location"
-                        value={locationFilter}
-                        onChange={(event) => setLocationFilter(event.target.value)}
-                    >
-                        {locations.map((location) => (
-                            <option key={location} value={location}>
-                                {location}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
 
-            {/* ─── Results Summary ─────────────────────────────── */}
-            <div className="company-summary glass-card">
-                {loading ? (
-                    <div className="summary-loading">
-                        <span className="loading-spinner" />
-                        <span>Searching for companies...</span>
+            {/* ================= SEARCH ================= */}
+
+            <section className="company-search-section">
+
+                <div className="company-search-wrapper">
+
+                    <div className="search-heading">
+
+                        <div>
+                            <span className="section-label">
+                                COMPANY DIRECTORY
+                            </span>
+
+                            <h2>
+                                Explore employers
+                            </h2>
+                        </div>
+
+                        <p>
+                            Find organizations by name,
+                            industry, or location.
+                        </p>
+
                     </div>
-                ) : searchQuery ? (
+
+
+                    <div className="company-search-controls">
+
+                        <div className="company-main-search">
+                            <SearchBar
+                                value={searchInput}
+                                onChange={
+                                    handleSearchChange
+                                }
+                                onSubmit={
+                                    handleSearchSubmit
+                                }
+                                placeholder="Search companies..."
+                            />
+                        </div>
+
+
+                        <div className="location-filter">
+
+                            <div className="filter-label">
+                                <SlidersHorizontal
+                                    size={16}
+                                />
+
+                                <span>Location</span>
+                            </div>
+
+                            <select
+                                value={locationFilter}
+                                onChange={(event) =>
+                                    setLocationFilter(
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                {locations.map(
+                                    (location) => (
+                                        <option
+                                            key={location}
+                                            value={location}
+                                        >
+                                            {location}
+                                        </option>
+                                    )
+                                )}
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* ACTIVE FILTER */}
+
+                    {(searchQuery ||
+                        locationFilter !== "All") && (
+
+                            <div className="active-filters">
+
+                                <span>
+                                    Filters active
+                                </span>
+
+                                {searchQuery && (
+                                    <button>
+                                        <Search size={14} />
+
+                                        {searchQuery}
+
+                                        <X
+                                            size={14}
+                                            onClick={() => {
+                                                setSearchInput("");
+                                                setSearchQuery("");
+                                            }}
+                                        />
+                                    </button>
+                                )}
+
+                                {locationFilter !== "All" && (
+                                    <button>
+                                        <MapPin size={14} />
+
+                                        {locationFilter}
+
+                                        <X
+                                            size={14}
+                                            onClick={() =>
+                                                setLocationFilter(
+                                                    "All"
+                                                )
+                                            }
+                                        />
+                                    </button>
+                                )}
+
+                                <button
+                                    className="clear-filter-btn"
+                                    onClick={clearFilters}
+                                >
+                                    Clear all
+                                </button>
+
+                            </div>
+
+                        )}
+
+                </div>
+
+            </section>
+
+
+            {/* ================= RESULTS HEADER ================= */}
+
+            <section className="companies-results-header">
+
+                <div>
+
+                    <span className="section-label">
+                        RESULTS
+                    </span>
+
+                    <h2>
+                        {loading
+                            ? "Finding companies..."
+                            : `${companies.length} company${companies.length === 1
+                                ? ""
+                                : "ies"
+                            } discovered`}
+                    </h2>
+
+                </div>
+
+                {!loading && companies.length > 0 && (
                     <p>
-                        <strong>{companies.length}</strong> company{companies.length === 1 ? '' : 'ies'} found for “
-                        <span className="search-highlight">{searchQuery}</span>”
+                        Browse organizations and
+                        discover available opportunities.
                     </p>
-                ) : (
-                    <p>Browse <strong>{companies.length}</strong> featured employers</p>
                 )}
-            </div>
 
-            {/* ─── Company Grid ────────────────────────────────── */}
-            <div className="company-grid">
-                {!loading &&
-                    companies.map((job) => (
-                        <article key={job.id} className="company-card glass-card">
-                            <div className="company-card-header">
-                                <div className="company-avatar">
-                                    {job.company?.charAt(0) || 'C'}
+            </section>
+
+
+            {/* ================= ERROR ================= */}
+
+            {error && !loading && (
+
+                <div className="company-error-state">
+
+                    <div className="error-icon">
+                        <Building2 size={26} />
+                    </div>
+
+                    <div>
+                        <h3>
+                            Unable to load companies
+                        </h3>
+
+                        <p>{error}</p>
+                    </div>
+
+                    <button
+                        onClick={fetchCompanies}
+                    >
+                        Try Again
+                    </button>
+
+                </div>
+
+            )}
+
+
+            {/* ================= COMPANY GRID ================= */}
+
+            {!loading && !error && (
+                <section className="company-grid-modern">
+
+                    {companies.map(
+                        (company, index) => (
+
+                            <article
+                                key={company.id}
+                                className="company-card-modern"
+                                style={{
+                                    animationDelay:
+                                        `${index * 60}ms`,
+                                }}
+                            >
+
+                                {/* CARD TOP */}
+
+                                <div className="company-card-top">
+
+                                    <div
+                                        className={`company-logo ${getCompanyColor(
+                                            company.name
+                                        )
+                                            }`}
+                                    >
+                                        {getCompanyInitials(
+                                            company.name
+                                        )}
+                                    </div>
+
+
+                                    <button
+                                        className="company-more-btn"
+                                        aria-label="More company options"
+                                    >
+                                        •••
+                                    </button>
+
                                 </div>
-                                <div className="company-info">
-                                    <h2>{job.company || 'Unknown Company'}</h2>
-                                    <p className="company-industry">
-                                        {job.category || job.type || 'N/A'}
+
+
+                                {/* COMPANY INFO */}
+
+                                <div className="company-card-content">
+
+                                    <div className="company-title-row">
+
+                                        <h3>
+                                            {company.name}
+                                        </h3>
+
+                                        {company.website && (
+                                            <ExternalLink
+                                                size={16}
+                                            />
+                                        )}
+
+                                    </div>
+
+
+                                    <div className="company-category">
+                                        <Building2 size={14} />
+
+                                        {company.category}
+                                    </div>
+
+
+                                    <p className="company-description-modern">
+                                        {company.description}
                                     </p>
+
+
+                                    {/* META */}
+
+                                    <div className="company-meta-modern">
+
+                                        <span>
+                                            <MapPin size={15} />
+
+                                            {company.location}
+                                        </span>
+
+                                        {company.remote && (
+                                            <span>
+                                                <Globe size={15} />
+
+                                                Remote
+                                            </span>
+                                        )}
+
+                                    </div>
+
+
+                                    {/* JOB COUNT */}
+
+                                    <div className="company-opportunities">
+
+                                        <div className="opportunity-icon">
+                                            <BriefcaseBusiness
+                                                size={17}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <strong>
+                                                {company.jobCount}
+                                            </strong>
+
+                                            <span>
+                                                Open opportunity
+                                                {company.jobCount !==
+                                                    1
+                                                    ? "ies"
+                                                    : ""}
+                                            </span>
+                                        </div>
+
+                                    </div>
+
                                 </div>
-                                <span className="company-chip">{job.location || 'Remote'}</span>
-                            </div>
 
-                            <p className="company-description">
-                                {job.description || 'No description available.'}
-                            </p>
 
-                            <div className="company-meta">
-                                {job.remote && <span className="meta-tag">🌐 Remote</span>}
-                                {job.type && <span className="meta-tag">{job.type}</span>}
-                                {job.salary && <span className="meta-tag salary">💰 {job.salary}</span>}
-                            </div>
+                                {/* FOOTER */}
 
-                            <div className="company-card-footer">
-                                <div className="company-contact">
-                                    {job.contact ? (
-                                        <a href={`mailto:${job.contact}`} className="contact-link">
-                                            📧 {job.contact}
-                                        </a>
-                                    ) : (
-                                        <span className="contact-placeholder">📧 Contact info coming soon</span>
-                                    )}
-                                    {job.website && (
+                                <div className="company-card-footer-modern">
+
+                                    <button
+                                        className="view-company-btn"
+                                        onClick={() =>
+                                            navigate(
+                                                `/jobs?company=${encodeURIComponent(
+                                                    company.name
+                                                )}`
+                                            )
+                                        }
+                                    >
+                                        View Opportunities
+
+                                        <ArrowRight size={17} />
+                                    </button>
+
+
+                                    {company.website && (
+
                                         <a
-                                            href={`https://${job.website}`}
+                                            href={
+                                                company.website.startsWith(
+                                                    "http"
+                                                )
+                                                    ? company.website
+                                                    : `https://${company.website}`
+                                            }
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="contact-link"
+                                            className="company-website-btn"
+                                            aria-label={`Visit ${company.name}`}
                                         >
-                                            🌐 {job.website}
+                                            <Globe size={17} />
                                         </a>
-                                    )}
-                                </div>
-                                <button className="button button-primary small-button">
-                                    View Company →
-                                </button>
-                            </div>
-                        </article>
-                    ))}
 
-                {!loading && companies.length === 0 && (
-                    <div className="empty-state glass-card">
-                        <div className="empty-icon">🔍</div>
-                        <h3>No companies matched your search</h3>
-                        <p>Try adjusting your search terms or filters to find more results.</p>
+                                    )}
+
+                                </div>
+
+                            </article>
+
+                        )
+                    )}
+
+                </section>
+            )}
+
+
+            {/* ================= EMPTY ================= */}
+
+            {!loading &&
+                !error &&
+                companies.length === 0 && (
+
+                    <section className="company-empty-modern">
+
+                        <div className="empty-visual">
+                            <div className="empty-circle circle-one" />
+                            <div className="empty-circle circle-two" />
+
+                            <Search size={38} />
+                        </div>
+
+                        <span className="section-label">
+                            NO RESULTS
+                        </span>
+
+                        <h2>
+                            No companies found
+                        </h2>
+
+                        <p>
+                            We couldn't find companies
+                            matching your current search.
+                            Try adjusting your filters.
+                        </p>
+
                         <button
-                            className="button button-secondary"
-                            onClick={() => {
-                                setSearchInput('');
-                                setSearchQuery('');
-                                setLocationFilter('All');
-                            }}
+                            onClick={clearFilters}
                         >
+                            <X size={17} />
                             Clear Filters
                         </button>
-                    </div>
+
+                    </section>
+
                 )}
 
-                {loading && (
-                    <div className="loading-grid">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="company-card-skeleton">
-                                <div className="skeleton" style={{ height: '60px', marginBottom: '12px' }} />
-                                <div className="skeleton" style={{ height: '80px', marginBottom: '12px' }} />
-                                <div className="skeleton" style={{ height: '40px' }} />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+
+            {/* ================= LOADING ================= */}
+
+            {loading && (
+
+                <section className="company-grid-modern">
+
+                    {Array.from(
+                        { length: 6 }
+                    ).map((_, index) => (
+
+                        <div
+                            key={index}
+                            className="company-skeleton-card"
+                        >
+
+                            <div className="skeleton-logo" />
+
+                            <div className="skeleton-line title" />
+
+                            <div className="skeleton-line short" />
+
+                            <div className="skeleton-line" />
+
+                            <div className="skeleton-line" />
+
+                            <div className="skeleton-footer" />
+
+                        </div>
+
+                    ))}
+
+                </section>
+
+            )}
+
         </div>
     );
 }

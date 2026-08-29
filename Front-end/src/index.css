@@ -1,78 +1,150 @@
 /* ==========================================================================
-   INDEX.CSS - Design Tokens, Dark Charcoal Theme, Reset & Core Typography
+   INDEX.CSS - Design System Tokens & Global Styles
    ========================================================================== */
 
-/* ----- Root Tokens (Light Theme) ----- */
+/* ----- 1. ROOT TOKENS (Light Theme) ----- */
 :root {
+  /* Backgrounds */
   --bg: #f8fafc;
+  --bg-gradient: radial-gradient(ellipse at 50% 0%, rgba(37, 99, 235, 0.04) 0%, transparent 70%);
+
+  /* Panels & Cards */
   --panel: #ffffff;
   --panel-alt: #f1f5f9;
+  --panel-hover: #f8fafc;
+
+  /* Text */
   --text: #0f172a;
   --text-strong: #020617;
-  --muted: #64748b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+
+  /* Borders */
   --border: #e2e8f0;
+  --border-light: #f1f5f9;
+
+  /* Accent Colors */
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-soft: rgba(37, 99, 235, 0.10);
+  --accent-soft-hover: rgba(37, 99, 235, 0.18);
   --accent-dark: #1e40af;
   --accent-bright: #60a5fa;
-  --success: #16a34a;
-  --danger: #dc2626;
-  --warning: #d97706;
+  --accent-gradient: linear-gradient(135deg, #2563eb, #7c3aed);
 
-  /* ---- Glass & Shadows ---- */
+  /* Status Colors */
+  --success: #16a34a;
+  --success-soft: rgba(22, 163, 74, 0.12);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.12);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+  --info: #3b82f6;
+  --info-soft: rgba(59, 130, 246, 0.12);
+
+  /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.60);
+  --glass-bg-solid: rgba(255, 255, 255, 0.92);
   --glass-border: rgba(255, 255, 255, 0.25);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(20px);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
   --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 20px 45px -10px rgba(15, 23, 42, 0.12);
+  --shadow-xl: 0 30px 60px -15px rgba(15, 23, 42, 0.15);
   --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.12);
 
-  /* ---- Radius ---- */
+  /* Radius */
+  --radius-xs: 4px;
   --radius-sm: 8px;
+  --radius-md: 12px;
   --radius: 14px;
-  --radius-lg: 22px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
-  /* ---- Typography ---- */
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --transition-fast: 0.15s ease;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ----- Dark Theme (Dark Charcoal Gray) ----- */
-:root[data-theme='dark'],
+/* ----- 2. ROOT TOKENS (Dark Theme) ----- */
 [data-theme='dark'] {
+  /* Backgrounds */
   --bg: #1a1a1a;
+  --bg-gradient: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+
+  /* Panels & Cards */
   --panel: #2c2c2c;
   --panel-alt: #3a3a3a;
+  --panel-hover: #404040;
+
+  /* Text */
   --text: #e2e8f0;
   --text-strong: #ffffff;
-  --muted: #94a3b8;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+
+  /* Borders */
   --border: #3f3f46;
+  --border-light: #4a4a52;
+
+  /* Accent Colors */
   --accent: #3b82f6;
   --accent-hover: #60a5fa;
   --accent-soft: rgba(59, 130, 246, 0.16);
+  --accent-soft-hover: rgba(59, 130, 246, 0.25);
   --accent-dark: #93c5fd;
   --accent-bright: #93c5fd;
-  --success: #22c55e;
-  --danger: #ef4444;
-  --warning: #f59e0b;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
 
-  --glass-bg: rgba(44, 44, 44, 0.70);
+  /* Status Colors */
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.15);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.15);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.15);
+  --info: #3b82f6;
+  --info-soft: rgba(59, 130, 246, 0.15);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(44, 44, 44, 0.72);
+  --glass-bg-solid: rgba(44, 44, 44, 0.95);
   --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.50);
-  --shadow-lg: 0 20px 45px -10px rgba(0, 0, 0, 0.70);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --glass-blur: blur(20px);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 45px -10px rgba(0, 0, 0, 0.65);
+  --shadow-xl: 0 30px 60px -15px rgba(0, 0, 0, 0.75);
   --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.08);
 }
 
-/* ==========================================================================
-   CSS RESET & GLOBAL STYLES
-   ========================================================================== */
+/* ----- 3. CSS RESET & BASE ----- */
 *,
 *::before,
 *::after {
@@ -92,13 +164,14 @@ body {
   font-family: var(--font-sans);
   color: var(--text);
   background-color: var(--bg);
+  background-image: var(--bg-gradient);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition), color var(--transition);
 }
 
-/* ---- Typography ---- */
+/* ----- 4. TYPOGRAPHY ----- */
 h1,
 h2,
 h3,
@@ -107,11 +180,38 @@ h5,
 h6 {
   color: var(--text-strong);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 2rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+h5 {
+  font-size: 1.125rem;
+}
+
+h6 {
+  font-size: 1rem;
 }
 
 p {
   color: var(--text);
+  line-height: 1.7;
 }
 
 a {
@@ -124,15 +224,7 @@ a:hover {
   color: var(--accent-hover);
 }
 
-img,
-svg,
-video {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-/* ---- Form Elements ---- */
+/* ----- 5. FORM ELEMENTS ----- */
 button,
 input,
 select,
@@ -154,9 +246,10 @@ textarea {
   padding: 0.75rem 1rem;
   background-color: var(--panel-alt);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-size: 0.95rem;
 }
 
 input:focus,
@@ -165,15 +258,21 @@ textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
+  background-color: var(--panel);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--muted);
+  color: var(--text-light);
   opacity: 0.8;
 }
 
-/* ---- Accessibility ---- */
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ----- 6. ACCESSIBILITY ----- */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -191,10 +290,10 @@ textarea::placeholder {
   border: 0;
 }
 
-/* ---- Scrollbar ---- */
+/* ----- 7. SCROLLBAR ----- */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -207,14 +306,14 @@ textarea::placeholder {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  background: var(--text-light);
 }
 
-/* ---- Glassmorphism Utility ---- */
+/* ----- 8. UTILITY CLASSES ----- */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-lg);
@@ -222,12 +321,12 @@ textarea::placeholder {
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
-  transition: transform var(--transition), box-shadow var(--transition);
+  transition: all var(--transition);
 }
 
 .glass-card:hover {
@@ -235,7 +334,6 @@ textarea::placeholder {
   box-shadow: var(--shadow-lg), var(--glass-shadow);
 }
 
-/* ---- Skeleton Loading ---- */
 .skeleton {
   background: linear-gradient(90deg, var(--panel-alt) 25%, var(--panel) 50%, var(--panel-alt) 75%);
   background-size: 200% 100%;
@@ -253,10 +351,90 @@ textarea::placeholder {
   }
 }
 
-/* ---- Page Transitions ---- */
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.sticky {
+  position: sticky;
+}
+
+.rounded {
+  border-radius: var(--radius);
+}
+
+.rounded-full {
+  border-radius: var(--radius-full);
+}
+
+.shadow {
+  box-shadow: var(--shadow);
+}
+
+/* ----- 9. PAGE TRANSITIONS ----- */
 .page-enter {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(16px);
 }
 
 .page-enter-active {
@@ -272,6 +450,6 @@ textarea::placeholder {
 
 .page-exit-active {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(-16px);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
