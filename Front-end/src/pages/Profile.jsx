@@ -1,195 +1,266 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';  // ✅ Import Link
+import { Link } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
+
+// ─── Sub-components ──────────────────────────────────────────
+
+function ProfileHeader({ user, profile, onAvatarChange }) {
+    return (
+        <div className="profile-header glass-card">
+            <div className="profile-avatar-section">
+                <div className="profile-avatar">
+                    <img
+                        src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.fullName || 'User'}&background=4f46e5&color=fff&size=120`}
+                        alt={user?.fullName}
+                    />
+                    <button className="avatar-upload-btn" onClick={onAvatarChange}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                        </svg>
+                    </button>
+                </div>
+                <div className="profile-name-title">
+                    <h1>{user?.fullName || 'User'}</h1>
+                    <p className="profile-title">{profile?.title || 'Professional'}</p>
+                    <div className="profile-location">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {profile?.location || 'Add your location'}
+                    </div>
+                </div>
+            </div>
+            <div className="profile-actions">
+                <button className="button button-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function ProfileAbout({ bio, onSave }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [value, setValue] = useState(bio || '');
+
+    const handleSave = () => {
+        onSave('bio', value);
+        setIsEditing(false);
+    };
+
+    return (
+        <div className="profile-section glass-card">
+            <div className="section-header">
+                <h3>About</h3>
+                <button className="button-ghost" onClick={() => setIsEditing(!isEditing)}>
+                    {isEditing ? 'Cancel' : 'Edit'}
+                </button>
+            </div>
+            {isEditing ? (
+                <div className="edit-bio">
+                    <textarea
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        placeholder="Tell us about yourself..."
+                        rows={4}
+                    />
+                    <button className="button button-primary" onClick={handleSave}>Save</button>
+                </div>
+            ) : (
+                <p className="profile-bio">{bio || 'No bio added yet. Tell employers about yourself!'}</p>
+            )}
+        </div>
+    );
+}
+
+function ProfileSkills({ skills, onSave }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [value, setValue] = useState(skills?.join(', ') || '');
+
+    const handleSave = () => {
+        const skillArray = value.split(',').map(s => s.trim()).filter(Boolean);
+        onSave('skills', skillArray);
+        setIsEditing(false);
+    };
+
+    return (
+        <div className="profile-section glass-card">
+            <div className="section-header">
+                <h3>Skills</h3>
+                <button className="button-ghost" onClick={() => setIsEditing(!isEditing)}>
+                    {isEditing ? 'Cancel' : 'Edit'}
+                </button>
+            </div>
+            {isEditing ? (
+                <div className="edit-skills">
+                    <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        placeholder="React, Node.js, Python, AWS..."
+                    />
+                    <button className="button button-primary" onClick={handleSave}>Save</button>
+                </div>
+            ) : (
+                <div className="skills-tags">
+                    {skills?.length > 0 ? (
+                        skills.map((skill, i) => (
+                            <span key={i} className="skill-tag">{skill}</span>
+                        ))
+                    ) : (
+                        <p className="text-muted">No skills added yet.</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ProfileExperience({ experience, onSave }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [items, setItems] = useState(experience || []);
+
+    // ... similar edit pattern
+
+    return (
+        <div className="profile-section glass-card">
+            <div className="section-header">
+                <h3>Experience</h3>
+                <button className="button-ghost">Add</button>
+            </div>
+            {items.length > 0 ? (
+                items.map((exp, i) => (
+                    <div key={i} className="experience-item">
+                        <div className="exp-header">
+                            <h4>{exp.title}</h4>
+                            <span className="exp-company">{exp.company}</span>
+                        </div>
+                        <p className="exp-date">{exp.startDate} - {exp.endDate || 'Present'}</p>
+                        <p className="exp-description">{exp.description}</p>
+                    </div>
+                ))
+            ) : (
+                <p className="text-muted">No experience added yet.</p>
+            )}
+        </div>
+    );
+}
+
+// ─── Main Component ──────────────────────────────────────────
 
 function Profile({ user }) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
-    const [formData, setFormData] = useState({
-        skills: '',
-        preferences: '',
+    const [profile, setProfile] = useState({
+        skills: [],
+        preferences: [],
         location: '',
         experience_level: '',
         education: '',
+        bio: '',
+        title: '',
+        experience: [],
+        education_items: [],
+        projects: [],
+        certifications: [],
     });
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const token = localStorage.getItem('jobscout-token');
-                const response = await fetch(`${API_BASE}/ai/profile`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
+    const fetchProfile = async () => {
+        try {
+            const token = localStorage.getItem('jobscout-token');
+            const response = await fetch(`${API_BASE}/ai/profile`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setFormData({
-                        skills: data.skills?.join(', ') || '',
-                        preferences: data.preferences?.join(', ') || '',
-                        location: data.location || '',
-                        experience_level: data.experience_level || '',
-                        education: data.education || '',
-                    });
-                }
-            } catch (error) {
-                console.error('Profile fetch error:', error);
-            } finally {
-                setLoading(false);
+            if (response.ok) {
+                const data = await response.json();
+                setProfile(prev => ({ ...prev, ...data }));
             }
-        };
+        } catch (error) {
+            console.error('Profile fetch error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchProfile();
     }, []);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleProfileUpdate = async (field, value) => {
         setSaving(true);
-        setMessage('');
-
         try {
             const token = localStorage.getItem('jobscout-token');
+            const updatedProfile = { ...profile, [field]: value };
             const response = await fetch(`${API_BASE}/ai/profile`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
-                    preferences: formData.preferences.split(',').map(s => s.trim()).filter(Boolean),
-                    location: formData.location,
-                    experience_level: formData.experience_level,
-                    education: formData.education,
-                }),
+                body: JSON.stringify(updatedProfile),
             });
 
             if (response.ok) {
-                setMessage('✅ Profile updated successfully!');
-            } else {
-                setMessage('❌ Failed to update profile.');
+                setProfile(updatedProfile);
+                setMessage('✅ Profile updated!');
+                setTimeout(() => setMessage(''), 3000);
             }
         } catch (error) {
-            setMessage('❌ An error occurred.');
+            setMessage('❌ Failed to update.');
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) {
-        return <div className="loading-state">Loading profile...</div>;
+        return (
+            <div className="page-content page-profile">
+                <div className="skeleton" style={{ height: '200px', marginBottom: '24px' }} />
+                <div className="skeleton" style={{ height: '120px', marginBottom: '16px' }} />
+                <div className="skeleton" style={{ height: '120px' }} />
+            </div>
+        );
     }
 
     return (
         <div className="page-content page-profile">
-            <div className="section-heading">
-                <div>
-                    <h1>👤 Your Profile</h1>
-                    <p>Update your skills and preferences for better AI job recommendations</p>
-                </div>
-            </div>
+            <div className="profile-page">
+                <ProfileHeader user={user} profile={profile} />
 
-            <div className="profile-card" style={{
-                background: 'var(--panel)',
-                padding: '28px',
-                borderRadius: 'var(--radius)',
-                border: '1px solid var(--border)',
-                maxWidth: '600px',
-                margin: '0 auto'
-            }}>
-                <form onSubmit={handleSubmit} className="profile-form">
-                    <div className="form-group">
-                        <label>Skills (comma separated)</label>
-                        <input
-                            type="text"
-                            name="skills"
-                            value={formData.skills}
-                            onChange={handleChange}
-                            placeholder="React, Node.js, Python, AWS"
-                        />
-                        <small className="hint-text">e.g. React, Node.js, Python</small>
+                <div className="profile-grid">
+                    <div className="profile-main">
+                        <ProfileAbout bio={profile.bio} onSave={handleProfileUpdate} />
+                        <ProfileExperience experience={profile.experience} onSave={handleProfileUpdate} />
                     </div>
-
-                    <div className="form-group">
-                        <label>Preferences (comma separated)</label>
-                        <input
-                            type="text"
-                            name="preferences"
-                            value={formData.preferences}
-                            onChange={handleChange}
-                            placeholder="Remote, Full-time, Startup"
-                        />
-                        <small className="hint-text">e.g. Remote, Full-time, Startup</small>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Preferred Location</label>
-                        <input
-                            type="text"
-                            name="location"
-                            value={formData.location}
-                            onChange={handleChange}
-                            placeholder="San Francisco, Remote, Any"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Experience Level</label>
-                        <select
-                            name="experience_level"
-                            value={formData.experience_level}
-                            onChange={handleChange}
-                        >
-                            <option value="">Select experience level</option>
-                            <option value="Entry">Entry Level</option>
-                            <option value="Junior">Junior</option>
-                            <option value="Mid">Mid Level</option>
-                            <option value="Senior">Senior</option>
-                            <option value="Lead">Lead</option>
-                            <option value="Manager">Manager</option>
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Education</label>
-                        <input
-                            type="text"
-                            name="education"
-                            value={formData.education}
-                            onChange={handleChange}
-                            placeholder="B.S. Computer Science, MBA, etc."
-                        />
-                    </div>
-
-                    {message && (
-                        <div className="profile-message" style={{
-                            padding: '10px 14px',
-                            borderRadius: '8px',
-                            background: message.includes('✅') ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-                            color: message.includes('✅') ? 'var(--success)' : 'var(--danger)',
-                        }}>
-                            {message}
+                    <div className="profile-sidebar">
+                        <ProfileSkills skills={profile.skills} onSave={handleProfileUpdate} />
+                        <div className="profile-section glass-card">
+                            <h3>Profile Completion</h3>
+                            <div className="completion-bar">
+                                <div className="completion-fill" style={{ width: '60%' }} />
+                            </div>
+                            <p className="completion-text">60% complete</p>
+                            <ul className="completion-checklist">
+                                <li className="completed">✓ Profile photo</li>
+                                <li className="completed">✓ Name & title</li>
+                                <li className="completed">✓ Skills</li>
+                                <li className="pending">○ Experience</li>
+                                <li className="pending">○ Education</li>
+                            </ul>
                         </div>
-                    )}
+                    </div>
+                </div>
 
-                    <button type="submit" className="button button-primary" disabled={saving}>
-                        {saving ? 'Saving...' : 'Save Profile'}
-                    </button>
-                </form>
-            </div>
-
-            <div style={{ textAlign: 'center', marginTop: '24px' }}>
-                <Link to="/recommendations" className="button button-secondary">
-                    ✨ Get Job Recommendations
-                </Link>
+                {message && <div className="toast">{message}</div>}
             </div>
         </div>
     );

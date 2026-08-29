@@ -3,76 +3,80 @@ import { Link } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-export default function ForgotPassword() {
+function ForgotPassword() {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
         setMessage('');
         setError('');
 
-        if (!email.trim()) {
-            setError('Please enter your email address.');
-            return;
-        }
-
-        setIsSubmitting(true);
-
         try {
-            const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+            // ✅ FIXED: removed extra /api
+            const response = await fetch(`${API_BASE}/auth/forgot-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: email.trim() }),
+                body: JSON.stringify({ email }),
             });
 
             const data = await response.json();
-            if (!response.ok) {
-                setError(data.error || 'Unable to submit your request.');
+
+            if (response.ok) {
+                setMessage(data.message || 'If this email is registered, a password reset link will be sent.');
+                setEmail('');
             } else {
-                setMessage(data.message || 'If the email exists, you will receive instructions shortly.');
+                setError(data.error || 'Something went wrong. Please try again.');
             }
         } catch (err) {
             setError('Unable to reach the server. Please try again later.');
         } finally {
-            setIsSubmitting(false);
+            setLoading(false);
         }
     };
 
     return (
         <div className="page-content page-auth">
-            <div className="auth-page-card">
-                <h2>Reset your password</h2>
-                <p>Enter the email address for your account and we’ll send password reset instructions.</p>
+            <div className="auth-page-card glass-card">
+                <h2>Reset Password</h2>
+                <p>Enter your email address and we'll send you a link to reset your password.</p>
 
                 <form className="auth-form" onSubmit={handleSubmit}>
-                    <label htmlFor="email">Email</label>
-                    <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        placeholder="you@example.com"
-                        required
-                    />
+                    <div className="form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            required
+                        />
+                    </div>
 
-                    {error && <p className="field-error">{error}</p>}
-                    {message && <p className="field-success">{message}</p>}
+                    {message && <div className="success-message">{message}</div>}
+                    {error && <div className="field-error">{error}</div>}
 
-                    <button type="submit" className="button button-primary" disabled={isSubmitting}>
-                        {isSubmitting ? 'Sending…' : 'Send reset link'}
+                    <button
+                        type="submit"
+                        className="button button-primary button-full"
+                        disabled={loading}
+                    >
+                        {loading ? 'Sending...' : 'Send Reset Link'}
                     </button>
-                </form>
 
-                <p className="auth-help">
-                    Remembered your password? <Link to="/login">Sign in</Link>.
-                </p>
+                    <div className="auth-help">
+                        <Link to="/login">← Back to Login</Link>
+                    </div>
+                </form>
             </div>
         </div>
     );
 }
+
+export default ForgotPassword;

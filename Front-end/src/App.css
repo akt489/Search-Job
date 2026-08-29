@@ -33,7 +33,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   2. BUTTONS & INTERACTIVE ELEMENTS (Touch target min-height: 44px)
+   2. BUTTONS & INTERACTIVE ELEMENTS
    -------------------------------------------------------------------------- */
 .button {
   display: inline-flex;
@@ -49,30 +49,29 @@
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .button:active {
   transform: scale(0.98);
 }
 
-.button:disabled,
-.button[disabled] {
+.button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
 .button-primary {
-  background-color: var(--accent);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  box-shadow: 0 4px 14px var(--accent-soft);
 }
 
 .button-primary:hover:not(:disabled) {
-  background-color: var(--accent-hover);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-hover), var(--accent-dark));
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.30);
+  transform: translateY(-2px);
 }
 
 .button-secondary {
@@ -88,7 +87,7 @@
 }
 
 .button-tertiary {
-  background-color: transparent;
+  background: transparent;
   color: var(--text);
 }
 
@@ -98,7 +97,7 @@
 }
 
 .button-outline {
-  background-color: transparent;
+  background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
 }
@@ -111,7 +110,7 @@
 
 .small-button {
   min-height: 38px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   font-size: 0.875rem;
   border-radius: var(--radius-sm);
 }
@@ -121,15 +120,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   3. NAVBAR & HEADER COMPONENTS
+   3. NAVBAR
    -------------------------------------------------------------------------- */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--panel);
-  border-bottom: 1px solid var(--border);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
   box-shadow: var(--shadow-sm);
 }
 
@@ -165,12 +165,6 @@
   overflow: hidden;
 }
 
-.logo-mark img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .nav-layout {
   display: flex;
   align-items: center;
@@ -189,7 +183,7 @@
   font-size: 0.95rem;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .nav-links a:hover,
@@ -207,7 +201,6 @@
 .theme-toggle {
   min-height: 40px;
   width: 40px;
-  height: 40px;
   padding: 0;
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
@@ -215,7 +208,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .theme-toggle:hover {
@@ -259,18 +252,8 @@
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* Header Component (TSX variant) */
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  background-color: var(--panel);
-  border-bottom: 1px solid var(--border);
-}
-
 /* --------------------------------------------------------------------------
-   4. SEARCH BAR COMPONENT
+   4. SEARCH BAR
    -------------------------------------------------------------------------- */
 .search-bar {
   display: flex;
@@ -284,23 +267,19 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 6px 8px 6px 16px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--glass-shadow);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .search-field-container:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
-}
-
-.search-field {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
 }
 
 .search-input {
@@ -316,14 +295,6 @@
   border-radius: var(--radius) !important;
 }
 
-.search-error {
-  font-size: 0.85rem;
-  color: var(--danger);
-  margin-top: 4px;
-  padding-left: 8px;
-  min-height: 20px;
-}
-
 /* --------------------------------------------------------------------------
    5. FILTER PANEL & JOBS LAYOUT
    -------------------------------------------------------------------------- */
@@ -337,20 +308,16 @@
 .filter-panel {
   position: sticky;
   top: 90px;
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .filter-section h4 {
@@ -363,16 +330,15 @@
 .filter-apply-button {
   width: 100%;
   min-height: 44px;
-  margin-top: 8px;
   border-radius: var(--radius);
-  background-color: var(--accent);
-  color: #ffffff;
+  background: var(--accent);
+  color: #fff;
   font-weight: 600;
-  transition: background-color var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .filter-apply-button:hover {
-  background-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .jobs-main {
@@ -382,8 +348,10 @@
 }
 
 .job-count-bar {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   padding: 16px 20px;
   color: var(--muted);
@@ -391,7 +359,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   6. JOB LIST & JOB CARD COMPONENTS
+   6. JOB LIST & JOB CARD
    -------------------------------------------------------------------------- */
 .job-list-grid {
   display: grid;
@@ -400,11 +368,13 @@
 }
 
 .job-card {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -414,7 +384,7 @@
 
 .job-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), var(--glass-shadow);
   border-color: var(--accent);
 }
 
@@ -429,7 +399,6 @@
   font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 4px;
-  color: var(--text-strong);
 }
 
 .company-link {
@@ -448,7 +417,6 @@
   font-weight: 600;
   font-size: 0.85rem;
   transition: all var(--transition-fast);
-  cursor: pointer;
 }
 
 .save-button:hover {
@@ -468,12 +436,6 @@
   gap: 8px 12px;
   font-size: 0.875rem;
   color: var(--muted);
-}
-
-.job-meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .job-preview {
@@ -514,7 +476,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   7. JOB DETAILS PAGE COMPONENT
+   7. JOB DETAILS
    -------------------------------------------------------------------------- */
 .job-details-layout {
   display: grid;
@@ -530,11 +492,13 @@
 }
 
 .job-header {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 32px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
 }
 
 .eyebrow {
@@ -570,15 +534,16 @@
   border: 1px solid var(--border);
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text);
 }
 
 .job-block {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 32px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
 }
 
 .job-block h2 {
@@ -606,11 +571,13 @@
 }
 
 .job-summary-panel {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -645,14 +612,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   8. APPLICATION FORM COMPONENT
+   8. APPLICATION FORM
    -------------------------------------------------------------------------- */
 .application-form {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 36px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--glass-shadow);
   max-width: 800px;
   margin: 0 auto;
   display: flex;
@@ -754,14 +723,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   9. APPLICATION HISTORY TABLE COMPONENT (Card layout on mobile)
+   9. APPLICATION HISTORY TABLE
    -------------------------------------------------------------------------- */
 .history-table {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
 }
 
 .history-row {
@@ -821,16 +792,18 @@
 }
 
 /* --------------------------------------------------------------------------
-   10. AUTH FORMS (LoginForm & RegisterForm)
+   10. AUTH PAGES
    -------------------------------------------------------------------------- */
 .auth-page-card {
   max-width: 480px;
   margin: 40px auto;
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 40px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--glass-shadow);
 }
 
 .auth-form {
@@ -891,14 +864,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   11. DASHBOARD SIDEBAR & DASHBOARD COMPONENTS
+   11. DASHBOARD
    -------------------------------------------------------------------------- */
 .dashboard-sidebar {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
 }
 
 .dashboard-sidebar h3 {
@@ -921,7 +896,7 @@
   border-radius: var(--radius-sm);
   color: var(--text);
   font-weight: 500;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .dashboard-nav a:hover,
@@ -931,7 +906,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   12. SAVED JOBS LIST
+   12. SAVED JOBS
    -------------------------------------------------------------------------- */
 .saved-jobs-grid {
   display: grid;
@@ -940,33 +915,33 @@
 }
 
 .saved-job-card {
-  background-color: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
-
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .saved-job-card:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg), var(--glass-shadow);
 }
 
 .saved-actions {
   display: flex;
   gap: 10px;
-
   margin-top: 8px;
 }
 
 /* --------------------------------------------------------------------------
-   13. PAGINATION COMPONENT
+   13. PAGINATION
    -------------------------------------------------------------------------- */
 .pagination-bar {
   display: flex;
@@ -981,7 +956,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-
   flex-wrap: wrap;
 }
 
@@ -1005,14 +979,12 @@
 .page-button:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
-
   background-color: var(--accent-soft);
 }
 
 .page-button.active {
   background-color: var(--accent);
-  color: #ffffff;
-
+  color: #fff;
   border-color: var(--accent);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
@@ -1023,12 +995,14 @@
 }
 
 /* --------------------------------------------------------------------------
-   14. FOOTER COMPONENT
+   14. FOOTER
    -------------------------------------------------------------------------- */
 .site-footer {
   margin-top: auto;
-  background-color: var(--panel);
-  border-top: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--glass-border);
 }
 
 .footer-main {
@@ -1196,7 +1170,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .subscribe-btn:hover {
@@ -1232,7 +1206,9 @@
 .empty-state {
   text-align: center;
   padding: 48px 24px;
-  background-color: var(--panel);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
   color: var(--muted);
@@ -1247,17 +1223,10 @@
 }
 
 /* --------------------------------------------------------------------------
-   16. MEDIA QUERIES (BREAKPOINTS: 400px, 640px, 768px, 1024px, 1280px)
+   16. RESPONSIVE BREAKPOINTS
    -------------------------------------------------------------------------- */
 
-/* Desktop Extra Large (1280px+) */
-@media (min-width: 1280px) {
-  .app-main {
-    padding: 40px 0;
-  }
-}
-
-/* Desktop / Tablet Landscape (1024px to 1279px) */
+/* Tablet Landscape (≤ 1024px) */
 @media (max-width: 1024px) {
   .jobs-layout {
     grid-template-columns: 240px 1fr;
@@ -1278,7 +1247,7 @@
   }
 }
 
-/* Tablet Portrait (768px to 1023px) */
+/* Tablet Portrait (≤ 768px) */
 @media (max-width: 768px) {
   .jobs-layout {
     grid-template-columns: 1fr;
@@ -1312,14 +1281,14 @@
   }
 }
 
-/* Small Devices & Phones (640px and below) */
+/* Phones (≤ 640px) */
 @media (max-width: 640px) {
   .app-main {
     padding: 20px 0;
     width: min(100%, calc(100% - 24px));
   }
 
-  /* Responsive Mobile Navigation */
+  /* Mobile Nav */
   .menu-toggle {
     display: flex;
   }
@@ -1330,8 +1299,10 @@
     top: 100%;
     left: 0;
     right: 0;
-    background-color: var(--panel);
-    border-bottom: 1px solid var(--border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
     padding: 20px;
     flex-direction: column;
     align-items: stretch;
@@ -1369,7 +1340,7 @@
     border-radius: var(--radius-sm);
   }
 
-  /* Form Responsive Single Column */
+  /* Forms single column */
   .field-grid {
     grid-template-columns: 1fr;
   }
@@ -1386,7 +1357,7 @@
     width: 100%;
   }
 
-  /* Application History Table -> Mobile Cards */
+  /* History table → cards */
   .history-head {
     display: none;
   }
@@ -1397,7 +1368,7 @@
     padding: 16px;
     border-radius: var(--radius);
     margin-bottom: 12px;
-    background-color: var(--panel-alt);
+    background: var(--panel-alt);
   }
 
   .history-row span:first-child {
@@ -1432,7 +1403,7 @@
   }
 }
 
-/* Extra Small Phones (400px and below) */
+/* Extra Small Phones (≤ 400px) */
 @media (max-width: 400px) {
   .job-card {
     padding: 16px;
@@ -1457,19 +1428,21 @@
   }
 }
 
-/* ============================================
-   AI CHAT COMPONENT
-   ============================================ */
+/* --------------------------------------------------------------------------
+   17. AI CHAT (No Career Copilot)
+   -------------------------------------------------------------------------- */
 .ai-chat-container {
   position: fixed;
   bottom: 80px;
   right: 20px;
   width: 380px;
   max-height: 500px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1596,7 +1569,7 @@
   cursor: not-allowed;
 }
 
-/* Mobile responsiveness */
+/* Mobile AI Chat */
 @media (max-width: 640px) {
   .ai-chat-container {
     bottom: 70px;

@@ -13,22 +13,29 @@
   --border: #e2e8f0;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-soft: rgba(37, 99, 235, 0.10);
   --accent-dark: #1e40af;
   --accent-bright: #60a5fa;
   --success: #16a34a;
   --danger: #dc2626;
   --warning: #d97706;
-  
+
+  /* ---- Glass & Shadows ---- */
+  --glass-bg: rgba(255, 255, 255, 0.60);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
   --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 20px 45px -10px rgba(15, 23, 42, 0.12);
-  
+  --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.12);
+
+  /* ---- Radius ---- */
   --radius-sm: 8px;
   --radius: 14px;
   --radius-lg: 22px;
   --radius-full: 9999px;
-  
+
+  /* ---- Typography ---- */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --transition-fast: 0.15s ease;
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -38,9 +45,9 @@
 /* ----- Dark Theme (Dark Charcoal Gray) ----- */
 :root[data-theme='dark'],
 [data-theme='dark'] {
-  --bg: #1a1a1a;        /* Body background - dark charcoal */
-  --panel: #2c2c2c;     /* Card/Container - lighter charcoal */
-  --panel-alt: #3a3a3a; /* Inputs/Hover state - subtle contrast */
+  --bg: #1a1a1a;
+  --panel: #2c2c2c;
+  --panel-alt: #3a3a3a;
   --text: #e2e8f0;
   --text-strong: #ffffff;
   --muted: #94a3b8;
@@ -53,10 +60,14 @@
   --success: #22c55e;
   --danger: #ef4444;
   --warning: #f59e0b;
-  
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 45px -10px rgba(0, 0, 0, 0.7);
+
+  --glass-bg: rgba(44, 44, 44, 0.70);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 20px 45px -10px rgba(0, 0, 0, 0.70);
+  --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.08);
 }
 
 /* ==========================================================================
@@ -87,8 +98,13 @@ body {
   transition: background-color var(--transition), color var(--transition);
 }
 
-/* Typography Defaults */
-h1, h2, h3, h4, h5, h6 {
+/* ---- Typography ---- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--text-strong);
   font-weight: 700;
   line-height: 1.25;
@@ -108,14 +124,19 @@ a:hover {
   color: var(--accent-hover);
 }
 
-img, svg, video {
+img,
+svg,
+video {
   display: block;
   max-width: 100%;
   height: auto;
 }
 
-/* Form Elements Reset & Base */
-button, input, select, textarea {
+/* ---- Form Elements ---- */
+button,
+input,
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -126,7 +147,9 @@ button {
   border: none;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   width: 100%;
   padding: 0.75rem 1rem;
   background-color: var(--panel-alt);
@@ -136,18 +159,21 @@ input, select, textarea {
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: var(--muted);
   opacity: 0.8;
 }
 
-/* Accessibility Focus Ring */
+/* ---- Accessibility ---- */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -165,7 +191,7 @@ input::placeholder, textarea::placeholder {
   border: 0;
 }
 
-/* Scrollbar Customization */
+/* ---- Scrollbar ---- */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -182,4 +208,70 @@ input::placeholder, textarea::placeholder {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+/* ---- Glassmorphism Utility ---- */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), var(--glass-shadow);
+}
+
+/* ---- Skeleton Loading ---- */
+.skeleton {
+  background: linear-gradient(90deg, var(--panel-alt) 25%, var(--panel) 50%, var(--panel-alt) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ---- Page Transitions ---- */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
