@@ -75,6 +75,60 @@ router.get('/recommendations', authenticate, async (req, res) => {
     }
 });
 
+// ─── GET /api/ai/profile ────────────────────────────────────
+router.get('/profile', authenticate, async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            `SELECT skills, preferences, location, experience_level, education 
+             FROM user_profiles 
+             WHERE user_id = $1`,
+            [req.user.id]
+        );
+
+        if (rows.length === 0) {
+            // Return empty profile if not found
+            return res.json({
+                skills: [],
+                preferences: [],
+                location: '',
+                experience_level: '',
+                education: ''
+            });
+        }
+
+        res.json(rows[0]);
+    } catch (error) {
+        console.error('Profile fetch error:', error);
+        res.status(500).json({ error: 'Unable to fetch profile.' });
+    }
+});
+
+// ─── POST /api/ai/profile ────────────────────────────────────
+router.post('/profile', authenticate, async (req, res) => {
+    const { skills, preferences, location, experience_level, education } = req.body;
+
+    try {
+        await pool.query(
+            `INSERT INTO user_profiles (user_id, skills, preferences, location, experience_level, education, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (user_id) 
+             DO UPDATE SET 
+                skills = EXCLUDED.skills,
+                preferences = EXCLUDED.preferences,
+                location = EXCLUDED.location,
+                experience_level = EXCLUDED.experience_level,
+                education = EXCLUDED.education,
+                updated_at = NOW()`,
+            [req.user.id, skills || [], preferences || [], location, experience_level, education]
+        );
+
+        res.json({ success: true, message: 'Profile updated successfully.' });
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({ error: 'Unable to update profile.' });
+    }
+});
+
 // ─── POST /api/ai/refresh-recommendations ───────────────────
 router.post('/refresh-recommendations', authenticate, async (req, res) => {
     try {
