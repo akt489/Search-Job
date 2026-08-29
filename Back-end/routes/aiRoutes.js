@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import authenticate from '../middleware/authMiddleware.js';
-import pool from '../config/db.js';
+import pool from '../db.js';
 
 const router = express.Router();
 
