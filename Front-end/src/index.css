@@ -106,26 +106,26 @@
 
 /* ----- 2. ROOT TOKENS (Dark Theme) ----- */
 [data-theme='dark'] {
-  /* Backgrounds */
-  --bg: #0b0f17;
-  --bg-secondary: #111827;
-  --bg-gradient: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  /* Backgrounds (Dark Gray System) */
+  --bg: #121214;
+  --bg-secondary: #18181b;
+  --bg-gradient: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
 
   /* Panels & Cards */
-  --panel: #1e293b;
-  --panel-alt: #172033;
-  --panel-hover: #334155;
-  --panel-glass: rgba(30, 41, 59, 0.75);
+  --panel: #1f1f23;
+  --panel-alt: #17171a;
+  --panel-hover: #27272c;
+  --panel-glass: rgba(28, 28, 32, 0.78);
 
   /* Text */
-  --text: #e2e8f0;
-  --text-strong: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-light: #64748b;
+  --text: #e4e4e7;
+  --text-strong: #ffffff;
+  --text-muted: #a1a1aa;
+  --text-light: #71717a;
 
   /* Borders */
-  --border: #334155;
-  --border-light: #1e293b;
+  --border: #2d2d34;
+  --border-light: #202026;
   --border-accent: rgba(59, 130, 246, 0.35);
 
   /* Accent Colors */
@@ -159,12 +159,12 @@
   --info-soft: rgba(96, 165, 250, 0.15);
 
   /* Glassmorphism */
-  --glass-bg: rgba(30, 41, 59, 0.75);
-  --glass-bg-hover: rgba(30, 41, 59, 0.88);
-  --glass-bg-solid: rgba(30, 41, 59, 0.95);
+  --glass-bg: rgba(28, 28, 32, 0.78);
+  --glass-bg-hover: rgba(36, 36, 42, 0.9);
+  --glass-bg-solid: rgba(24, 24, 28, 0.96);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-hover: rgba(96, 165, 250, 0.35);
-  --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+  --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
   --glass-blur: blur(16px);
 
   /* Shadows */
