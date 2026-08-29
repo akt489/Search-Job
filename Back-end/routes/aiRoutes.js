@@ -103,6 +103,57 @@ router.get('/profile', authenticate, async (req, res) => {
     }
 });
 
+// GET /api/ai/profile
+router.get('/profile', authenticate, async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            `SELECT skills, preferences, location, experience_level, education,
+              experience, projects, certifications, avatar_url, bio, title
+       FROM user_profiles 
+       WHERE user_id = $1`,
+            [req.user.id]
+        );
+        if (rows.length === 0) {
+            return res.json({ skills: [], preferences: [], experience: [], education: [], projects: [], certifications: [] });
+        }
+        res.json(rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Unable to fetch profile.' });
+    }
+});
+
+// POST /api/ai/profile
+router.post('/profile', authenticate, async (req, res) => {
+    const { skills, preferences, location, experience_level, education, experience, projects, certifications, avatar_url, bio, title } = req.body;
+    try {
+        await pool.query(
+            `INSERT INTO user_profiles 
+       (user_id, skills, preferences, location, experience_level, education, experience, projects, certifications, avatar_url, bio, title, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+       ON CONFLICT (user_id) 
+       DO UPDATE SET 
+         skills = EXCLUDED.skills,
+         preferences = EXCLUDED.preferences,
+         location = EXCLUDED.location,
+         experience_level = EXCLUDED.experience_level,
+         education = EXCLUDED.education,
+         experience = EXCLUDED.experience,
+         projects = EXCLUDED.projects,
+         certifications = EXCLUDED.certifications,
+         avatar_url = EXCLUDED.avatar_url,
+         bio = EXCLUDED.bio,
+         title = EXCLUDED.title,
+         updated_at = NOW()`,
+            [req.user.id, skills || [], preferences || [], location, experience_level, education || [], experience || [], projects || [], certifications || [], avatar_url, bio, title]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Unable to update profile.' });
+    }
+});
+
 // ─── POST /api/ai/profile ────────────────────────────────────
 router.post('/profile', authenticate, async (req, res) => {
     const { skills, preferences, location, experience_level, education } = req.body;

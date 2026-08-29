@@ -1815,7 +1815,7 @@
 .profile-hero-pattern {
   height: 180px;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.85) 0%, rgba(124, 58, 237, 0.85) 100%),
-              radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.3) 0%, transparent 60%);
+    radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.3) 0%, transparent 60%);
   position: relative;
 }
 
@@ -2574,6 +2574,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -3206,6 +3207,7 @@
 }
 
 @media (max-width: 480px) {
+
   .job-card,
   .job-card-modern,
   .company-card-modern,
@@ -3253,4 +3255,208 @@
     height: 50px;
     font-size: 22px;
   }
+}
+
+/* ─── Centered Nav Links ────────────────────── */
+.navbar-inner .nav-links {
+  flex: 1;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .navbar-inner .nav-links {
+    justify-content: flex-start;
+  }
+}
+
+/* ─── Search Bar Button ──────────────────────── */
+.search-button {
+  border-radius: var(--radius) !important;
+}
+
+/* ─── Avatar Camera Button ───────────────────── */
+.profile-avatar-modern {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-camera-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.avatar-camera-btn:hover {
+  transform: scale(1.1);
+}
+
+/* ─── Section Edit Buttons ───────────────────── */
+.section-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  transition: all var(--transition-fast);
+}
+
+.section-edit-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ─── Inline Editor ──────────────────────────── */
+.inline-editor {
+  padding: 16px;
+  margin-top: 12px;
+  background: var(--panel-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.inline-editor .form-group {
+  margin-bottom: 12px;
+}
+
+.inline-editor .editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ─── Company Search Controls ────────────────── */
+.company-search-controls {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.company-search-controls .company-main-search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.company-search-controls .company-filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.company-search-controls .company-filters select {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-alt);
+}
+
+/* ─── Company Cards ──────────────────────────── */
+.company-card-modern {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--glass-shadow);
+  transition: all var(--transition);
+}
+
+.company-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+}
+
+.company-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.company-color-blue {
+  background: #2563eb;
+}
+
+.company-color-purple {
+  background: #7c3aed;
+}
+
+.company-color-green {
+  background: #16a34a;
+}
+
+.company-color-orange {
+  background: #d97706;
+}
+
+.company-color-pink {
+  background: #db2777;
+}
+
+/* ─── Company Grid ───────────────────────────── */
+.company-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* ─── Job Details Improvements ────────────────── */
+.job-header .job-company-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.job-header .job-company-meta svg {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ─── Active Filters ─────────────────────────── */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.active-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8rem;
+  border: 1px solid var(--accent-soft);
+}
+
+.clear-filter-btn {
+  background: transparent !important;
+  color: var(--text-muted) !important;
 }

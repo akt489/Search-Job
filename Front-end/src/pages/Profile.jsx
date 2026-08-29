@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     Camera,
     MapPin,
@@ -15,1235 +15,502 @@ import {
     Circle,
     UserRound,
     Mail,
-    Globe,
     ChevronRight,
     Loader2,
+    Trash2,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
+// ─── Inline Editor Modal ──────────────────────────────────
+function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isEditing }) {
+    const [formData, setFormData] = useState({});
+    const [loading, setLoading] = useState(false);
 
-/* =========================================================
-   PROFILE HEADER
-========================================================= */
+    useEffect(() => {
+        if (initialData) setFormData(initialData);
+    }, [initialData]);
 
-function ProfileHeader({ user, profile, onEdit }) {
-    const initials =
-        user?.fullName
-            ?.split(" ")
-            .slice(0, 2)
-            .map((name) => name[0])
-            .join("")
-            .toUpperCase() || "U";
+    if (!isOpen) return null;
+
+    const handleSubmit = async () => {
+        setLoading(true);
+        try {
+            await onSave(formData);
+            onClose();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <section className="profile-hero-modern">
-
-            {/* Decorative background */}
-
-            <div className="profile-hero-pattern" />
-
-            <div className="profile-hero-content">
-
-                <div className="profile-avatar-wrapper">
-
-                    <div className="profile-avatar-modern">
-
-                        {user?.avatar ? (
-                            <img
-                                src={user.avatar}
-                                alt={user.fullName}
+        <div className="inline-editor glass-card">
+            <div className="editor-header">
+                <h4>{isEditing ? "Edit" : "Add"} {title}</h4>
+                <button className="editor-close" onClick={onClose}><X size={18} /></button>
+            </div>
+            <div className="editor-body">
+                {fields.map((field) => (
+                    <div className="form-group" key={field.key}>
+                        <label>{field.label}</label>
+                        {field.type === "textarea" ? (
+                            <textarea
+                                value={formData[field.key] || ""}
+                                onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                placeholder={field.placeholder}
+                                rows={field.rows || 3}
+                            />
+                        ) : field.type === "checkbox" ? (
+                            <div className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={formData[field.key] || false}
+                                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.checked })}
+                                />
+                                <span>{field.label}</span>
+                            </div>
+                        ) : field.type === "date" ? (
+                            <input
+                                type="date"
+                                value={formData[field.key] || ""}
+                                onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                             />
                         ) : (
-                            <span>{initials}</span>
+                            <input
+                                type={field.type || "text"}
+                                value={formData[field.key] || ""}
+                                onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                placeholder={field.placeholder}
+                            />
                         )}
-
                     </div>
-
-                    <button
-                        className="avatar-camera-btn"
-                        aria-label="Change profile photo"
-                    >
-                        <Camera size={16} />
-                    </button>
-
-                </div>
-
-
-                <div className="profile-identity">
-
-                    <div className="profile-name-row">
-
-                        <h1>
-                            {user?.fullName || "Your Name"}
-                        </h1>
-
-                        <CheckCircle2
-                            size={20}
-                            className="profile-verified-icon"
-                        />
-
-                    </div>
-
-
-                    <p className="profile-professional-title">
-                        {profile?.title ||
-                            "Add your professional title"}
-                    </p>
-
-
-                    <div className="profile-basic-info">
-
-                        <span>
-                            <MapPin size={15} />
-
-                            {profile?.location ||
-                                "Add location"}
-                        </span>
-
-
-                        {user?.email && (
-                            <span>
-                                <Mail size={15} />
-
-                                {user.email}
-                            </span>
-                        )}
-
-                    </div>
-
-                </div>
-
-
-                <div className="profile-hero-actions">
-
-                    <button
-                        className="profile-edit-main-btn"
-                        onClick={onEdit}
-                    >
-                        <Pencil size={17} />
-
-                        Edit Profile
-                    </button>
-
-                </div>
-
+                ))}
             </div>
-
-        </section>
-    );
-}
-
-
-/* =========================================================
-   ABOUT SECTION
-========================================================= */
-
-function ProfileAbout({ bio, onSave }) {
-
-    const [editing, setEditing] =
-        useState(false);
-
-    const [value, setValue] =
-        useState(bio || "");
-
-    useEffect(() => {
-        setValue(bio || "");
-    }, [bio]);
-
-
-    const handleSave = () => {
-        onSave("bio", value);
-        setEditing(false);
-    };
-
-
-    return (
-        <section className="profile-section-modern">
-
-            <div className="profile-section-header">
-
-                <div className="section-title-group">
-
-                    <div className="section-icon">
-                        <UserRound size={18} />
-                    </div>
-
-                    <h2>About</h2>
-
-                </div>
-
-
-                {!editing && (
-                    <button
-                        className="section-edit-btn"
-                        onClick={() => setEditing(true)}
-                    >
-                        <Pencil size={15} />
-                        Edit
-                    </button>
-                )}
-
-            </div>
-
-
-            {editing ? (
-
-                <div className="profile-edit-area">
-
-                    <textarea
-                        value={value}
-                        onChange={(e) =>
-                            setValue(e.target.value)
-                        }
-                        placeholder="Tell employers about yourself, your experience, and career goals..."
-                        rows={5}
-                    />
-
-                    <div className="edit-actions">
-
-                        <button
-                            className="cancel-edit-btn"
-                            onClick={() =>
-                                setEditing(false)
-                            }
-                        >
-                            <X size={16} />
-                            Cancel
-                        </button>
-
-                        <button
-                            className="save-edit-btn"
-                            onClick={handleSave}
-                        >
-                            <Save size={16} />
-                            Save Changes
-                        </button>
-
-                    </div>
-
-                </div>
-
-            ) : (
-
-                <div className="about-content">
-
-                    {bio ? (
-
-                        <p>{bio}</p>
-
-                    ) : (
-
-                        <div className="empty-section">
-
-                            <Sparkles size={22} />
-
-                            <div>
-
-                                <strong>
-                                    Tell your professional story
-                                </strong>
-
-                                <p>
-                                    Add a short introduction about
-                                    your skills, experience, and
-                                    career goals.
-                                </p>
-
-                            </div>
-
-                            <button
-                                onClick={() =>
-                                    setEditing(true)
-                                }
-                            >
-                                Add About
-                                <ChevronRight size={16} />
-                            </button>
-
-                        </div>
-
-                    )}
-
-                </div>
-
-            )}
-
-        </section>
-    );
-}
-
-
-/* =========================================================
-   SKILLS
-========================================================= */
-
-function ProfileSkills({ skills = [], onSave }) {
-
-    const [editing, setEditing] =
-        useState(false);
-
-    const [value, setValue] =
-        useState(skills.join(", "));
-
-    useEffect(() => {
-        setValue(skills.join(", "));
-    }, [skills]);
-
-
-    const handleSave = () => {
-
-        const skillArray =
-            value
-                .split(",")
-                .map((skill) =>
-                    skill.trim()
-                )
-                .filter(Boolean);
-
-        onSave(
-            "skills",
-            skillArray
-        );
-
-        setEditing(false);
-    };
-
-
-    return (
-        <section className="profile-section-modern skills-section">
-
-            <div className="profile-section-header">
-
-                <div className="section-title-group">
-
-                    <div className="section-icon purple">
-                        <Code2 size={18} />
-                    </div>
-
-                    <h2>Skills</h2>
-
-                    {skills.length > 0 && (
-                        <span className="section-count">
-                            {skills.length}
-                        </span>
-                    )}
-
-                </div>
-
-
-                {!editing && (
-                    <button
-                        className="section-edit-btn"
-                        onClick={() =>
-                            setEditing(true)
-                        }
-                    >
-                        <Pencil size={15} />
-                    </button>
-                )}
-
-            </div>
-
-
-            {editing ? (
-
-                <div className="profile-edit-area">
-
-                    <input
-                        value={value}
-                        onChange={(e) =>
-                            setValue(e.target.value)
-                        }
-                        placeholder="React, Node.js, Python..."
-                    />
-
-                    <small>
-                        Separate skills using commas
-                    </small>
-
-
-                    <div className="edit-actions">
-
-                        <button
-                            className="cancel-edit-btn"
-                            onClick={() =>
-                                setEditing(false)
-                            }
-                        >
-                            Cancel
-                        </button>
-
-                        <button
-                            className="save-edit-btn"
-                            onClick={handleSave}
-                        >
-                            Save
-                        </button>
-
-                    </div>
-
-                </div>
-
-            ) : (
-
-                <div className="skills-modern-list">
-
-                    {skills.length > 0 ? (
-
-                        skills.map((skill, index) => (
-
-                            <span
-                                key={`${skill}-${index}`}
-                                className="skill-pill-modern"
-                            >
-                                {skill}
-                            </span>
-
-                        ))
-
-                    ) : (
-
-                        <div className="compact-empty">
-
-                            <Code2 size={20} />
-
-                            <span>
-                                Add skills to improve
-                                your recommendations.
-                            </span>
-
-                        </div>
-
-                    )}
-
-                </div>
-
-            )}
-
-        </section>
-    );
-}
-
-
-/* =========================================================
-   EXPERIENCE
-========================================================= */
-
-function ProfileExperience({
-    experience = [],
-}) {
-
-    return (
-        <section className="profile-section-modern">
-
-            <div className="profile-section-header">
-
-                <div className="section-title-group">
-
-                    <div className="section-icon orange">
-                        <BriefcaseBusiness size={18} />
-                    </div>
-
-                    <h2>Experience</h2>
-
-                </div>
-
-
-                <button className="section-add-btn">
-
-                    <Plus size={16} />
-
-                    Add Experience
-
+            <div className="editor-actions">
+                <button className="button button-primary small-button" onClick={handleSubmit} disabled={loading}>
+                    {loading ? <Loader2 size={16} className="spin" /> : <Save size={16} />} Save
                 </button>
+                <button className="button button-secondary small-button" onClick={onClose}>Cancel</button>
+            </div>
+        </div>
+    );
+}
 
+// ─── Profile Section Component ────────────────────────────
+function ProfileSection({ title, icon: Icon, items, fields, onAdd, onEdit, onDelete, emptyMessage, renderItem }) {
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [isAdding, setIsAdding] = useState(false);
+
+    const handleSave = async (data) => {
+        if (editingIndex !== null) {
+            await onEdit(editingIndex, data);
+            setEditingIndex(null);
+        } else {
+            await onAdd(data);
+            setIsAdding(false);
+        }
+    };
+
+    return (
+        <section className="profile-section-modern">
+            <div className="profile-section-header">
+                <div className="section-title-group">
+                    <div className="section-icon"><Icon size={18} /></div>
+                    <h2>{title}</h2>
+                </div>
+                <button className="section-add-btn" onClick={() => setIsAdding(true)}>
+                    <Plus size={16} /> Add
+                </button>
             </div>
 
-
-            {experience.length > 0 ? (
-
+            {items.length === 0 ? (
+                <div className="compact-empty">
+                    <Icon size={20} />
+                    <span>{emptyMessage}</span>
+                </div>
+            ) : (
                 <div className="timeline-list">
-
-                    {experience.map(
-                        (exp, index) => (
-
-                            <div
-                                className="timeline-item"
-                                key={index}
-                            >
-
-                                <div className="timeline-marker">
-                                    <BriefcaseBusiness
-                                        size={15}
-                                    />
-                                </div>
-
-
-                                <div className="timeline-content">
-
-                                    <div className="timeline-heading">
-
-                                        <div>
-
-                                            <h3>
-                                                {exp.title}
-                                            </h3>
-
-                                            <span>
-                                                {exp.company}
-                                            </span>
-
-                                        </div>
-
-                                        <button>
-                                            <Pencil size={15} />
-                                        </button>
-
+                    {items.map((item, index) => (
+                        <div key={index} className="timeline-item">
+                            <div className="timeline-marker"><Icon size={15} /></div>
+                            <div className="timeline-content">
+                                <div className="timeline-heading">
+                                    <div>{renderItem(item)}</div>
+                                    <div className="item-actions">
+                                        <button className="icon-btn" onClick={() => setEditingIndex(index)}><Pencil size={15} /></button>
+                                        <button className="icon-btn danger" onClick={() => onDelete(index)}><Trash2 size={15} /></button>
                                     </div>
-
-
-                                    <p className="timeline-date">
-
-                                        {exp.startDate}
-
-                                        {" — "}
-
-                                        {exp.endDate ||
-                                            "Present"}
-
-                                    </p>
-
-
-                                    {exp.description && (
-
-                                        <p className="timeline-description">
-                                            {exp.description}
-                                        </p>
-
-                                    )}
-
                                 </div>
-
                             </div>
-
-                        )
-                    )}
-
-                </div>
-
-            ) : (
-
-                <div className="profile-empty-large">
-
-                    <div className="empty-icon">
-                        <BriefcaseBusiness
-                            size={26}
-                        />
-                    </div>
-
-                    <h3>
-                        Add your experience
-                    </h3>
-
-                    <p>
-                        Show employers your work
-                        history and professional
-                        achievements.
-                    </p>
-
-                    <button className="section-add-btn">
-                        <Plus size={16} />
-                        Add Experience
-                    </button>
-
-                </div>
-
-            )}
-
-        </section>
-    );
-}
-
-
-/* =========================================================
-   EDUCATION
-========================================================= */
-
-function ProfileEducation({
-    education = [],
-}) {
-
-    return (
-        <section className="profile-section-modern">
-
-            <div className="profile-section-header">
-
-                <div className="section-title-group">
-
-                    <div className="section-icon green">
-                        <GraduationCap size={18} />
-                    </div>
-
-                    <h2>Education</h2>
-
-                </div>
-
-                <button className="section-add-btn">
-                    <Plus size={16} />
-                    Add Education
-                </button>
-
-            </div>
-
-
-            {education.length > 0 ? (
-
-                education.map(
-                    (item, index) => (
-
-                        <div
-                            className="education-item"
-                            key={index}
-                        >
-
-                            <div className="education-icon">
-                                <GraduationCap size={20} />
-                            </div>
-
-                            <div>
-
-                                <h3>
-                                    {item.degree ||
-                                        item.title}
-                                </h3>
-
-                                <p>
-                                    {item.school ||
-                                        item.institution}
-                                </p>
-
-                                <span>
-                                    {item.startDate}
-
-                                    {item.endDate &&
-                                        ` — ${item.endDate}`}
-                                </span>
-
-                            </div>
-
                         </div>
-
-                    )
-                )
-
-            ) : (
-
-                <div className="compact-empty">
-
-                    <GraduationCap size={20} />
-
-                    <span>
-                        Add your education background.
-                    </span>
-
+                    ))}
                 </div>
-
             )}
 
+            <InlineEditor
+                isOpen={editingIndex !== null || isAdding}
+                onClose={() => { setEditingIndex(null); setIsAdding(false); }}
+                onSave={handleSave}
+                initialData={editingIndex !== null ? items[editingIndex] : {}}
+                fields={fields}
+                title={title}
+                isEditing={editingIndex !== null}
+            />
         </section>
     );
 }
 
-
-/* =========================================================
-   PROJECTS
-========================================================= */
-
-function ProfileProjects({
-    projects = [],
-}) {
-
-    return (
-        <section className="profile-section-modern">
-
-            <div className="profile-section-header">
-
-                <div className="section-title-group">
-
-                    <div className="section-icon blue">
-                        <Code2 size={18} />
-                    </div>
-
-                    <h2>Projects</h2>
-
-                </div>
-
-                <button className="section-add-btn">
-                    <Plus size={16} />
-                    Add Project
-                </button>
-
-            </div>
-
-
-            {projects.length > 0 ? (
-
-                <div className="projects-grid">
-
-                    {projects.map(
-                        (project, index) => (
-
-                            <article
-                                className="project-card-profile"
-                                key={index}
-                            >
-
-                                <div className="project-card-icon">
-                                    <Code2 size={20} />
-                                </div>
-
-                                <h3>
-                                    {project.name ||
-                                        project.title}
-                                </h3>
-
-                                <p>
-                                    {project.description}
-                                </p>
-
-
-                                {project.link && (
-
-                                    <a
-                                        href={project.link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        View Project
-                                        <ChevronRight
-                                            size={15}
-                                        />
-                                    </a>
-
-                                )}
-
-                            </article>
-
-                        )
-                    )}
-
-                </div>
-
-            ) : (
-
-                <div className="compact-empty">
-
-                    <Code2 size={20} />
-
-                    <span>
-                        Showcase projects you've built.
-                    </span>
-
-                </div>
-
-            )}
-
-        </section>
-    );
-}
-
-
-/* =========================================================
-   PROFILE COMPLETION
-========================================================= */
-
-function ProfileCompletion({
-    user,
-    profile,
-}) {
-
-    const checklist =
-        useMemo(
-            () => [
-                {
-                    label: "Profile photo",
-                    completed: Boolean(
-                        user?.avatar
-                    ),
-                },
-                {
-                    label: "Professional title",
-                    completed: Boolean(
-                        profile.title
-                    ),
-                },
-                {
-                    label: "About section",
-                    completed: Boolean(
-                        profile.bio
-                    ),
-                },
-                {
-                    label: "Skills",
-                    completed:
-                        profile.skills?.length > 0,
-                },
-                {
-                    label: "Experience",
-                    completed:
-                        profile.experience?.length > 0,
-                },
-                {
-                    label: "Education",
-                    completed:
-                        profile.education_items
-                            ?.length > 0,
-                },
-            ],
-            [user, profile]
-        );
-
-
-    const completedCount =
-        checklist.filter(
-            (item) => item.completed
-        ).length;
-
-
-    const percentage =
-        Math.round(
-            (completedCount /
-                checklist.length) *
-            100
-        );
-
-
-    return (
-        <section className="profile-completion-card">
-
-            <div className="completion-header">
-
-                <div>
-
-                    <span className="section-label">
-                        PROFILE STRENGTH
-                    </span>
-
-                    <h3>
-                        {percentage >= 80
-                            ? "Looking great!"
-                            : "Complete your profile"}
-                    </h3>
-
-                </div>
-
-
-                <div className="completion-score">
-                    {percentage}%
-                </div>
-
-            </div>
-
-
-            <div className="completion-progress">
-
-                <div
-                    className="completion-progress-fill"
-                    style={{
-                        width: `${percentage}%`,
-                    }}
-                />
-
-            </div>
-
-
-            <div className="completion-list">
-
-                {checklist.map(
-                    (item) => (
-
-                        <div
-                            key={item.label}
-                            className={
-                                item.completed
-                                    ? "completion-item completed"
-                                    : "completion-item"
-                            }
-                        >
-
-                            {item.completed ? (
-                                <CheckCircle2
-                                    size={17}
-                                />
-                            ) : (
-                                <Circle size={17} />
-                            )}
-
-                            <span>
-                                {item.label}
-                            </span>
-
-                        </div>
-
-                    )
-                )}
-
-            </div>
-
-        </section>
-    );
-}
-
-
-/* =========================================================
-   MAIN PROFILE
-========================================================= */
-
+// ─── Main Profile Component ────────────────────────────────
 function Profile({ user }) {
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [profile, setProfile] = useState({
+        skills: [],
+        location: "",
+        bio: "",
+        title: "",
+        experience: [],
+        education_items: [],
+        projects: [],
+        certifications: [],
+        avatar_url: "",
+    });
 
-    const [loading, setLoading] =
-        useState(true);
+    const fileInputRef = useRef(null);
+    const [avatarPreview, setAvatarPreview] = useState(null);
 
-    const [saving, setSaving] =
-        useState(false);
-
-    const [message, setMessage] =
-        useState("");
-
-
-    const [profile, setProfile] =
-        useState({
-            skills: [],
-            preferences: [],
-            location: "",
-            experience_level: "",
-            education: "",
-            bio: "",
-            title: "",
-            experience: [],
-            education_items: [],
-            projects: [],
-            certifications: [],
-        });
-
-
-    /* FETCH PROFILE */
-
-    const fetchProfile =
-        async () => {
-
-            try {
-
-                const token =
-                    localStorage.getItem(
-                        "jobscout-token"
-                    );
-
-
-                const response =
-                    await fetch(
-                        `${API_BASE}/ai/profile`,
-                        {
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-                            },
-                        }
-                    );
-
-
-                if (response.ok) {
-
-                    const data =
-                        await response.json();
-
-                    setProfile((prev) => ({
-                        ...prev,
-                        ...data,
-                    }));
-
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "Profile fetch error:",
-                    error
-                );
-
-            } finally {
-
-                setLoading(false);
-
+    // ─── Fetch Profile ──────────────────────────────────────
+    const fetchProfile = async () => {
+        try {
+            const token = localStorage.getItem("jobscout-token");
+            const res = await fetch(`${API_BASE}/ai/profile`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setProfile((prev) => ({ ...prev, ...data }));
+                if (data.avatar_url) setAvatarPreview(data.avatar_url);
             }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        };
+    useEffect(() => { fetchProfile(); }, []);
 
-
-    useEffect(() => {
-        fetchProfile();
-    }, []);
-
-
-    /* UPDATE PROFILE */
-
-    const handleProfileUpdate =
-        async (field, value) => {
-
-            setSaving(true);
-
-            try {
-
-                const token =
-                    localStorage.getItem(
-                        "jobscout-token"
-                    );
-
-
-                const updatedProfile = {
-                    ...profile,
-                    [field]: value,
-                };
-
-
-                const response =
-                    await fetch(
-                        `${API_BASE}/ai/profile`,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-
-                                "Content-Type":
-                                    "application/json",
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    updatedProfile
-                                ),
-                        }
-                    );
-
-
-                if (response.ok) {
-
-                    setProfile(
-                        updatedProfile
-                    );
-
-                    setMessage(
-                        "Profile updated successfully!"
-                    );
-
-                } else {
-
-                    throw new Error(
-                        "Update failed"
-                    );
-
-                }
-
-            } catch (error) {
-
-                setMessage(
-                    "Unable to update profile."
-                );
-
-            } finally {
-
-                setSaving(false);
-
-                setTimeout(
-                    () => setMessage(""),
-                    3000
-                );
-
+    // ─── Update Profile ─────────────────────────────────────
+    const updateProfile = async (updates) => {
+        setSaving(true);
+        try {
+            const token = localStorage.getItem("jobscout-token");
+            const newProfile = { ...profile, ...updates };
+            const res = await fetch(`${API_BASE}/ai/profile`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(newProfile),
+            });
+            if (res.ok) {
+                setProfile(newProfile);
+                setMessage("Profile updated successfully!");
+                setTimeout(() => setMessage(""), 3000);
+                return true;
             }
+            return false;
+        } catch (err) {
+            console.error(err);
+            return false;
+        } finally {
+            setSaving(false);
+        }
+    };
 
+    // ─── Avatar Upload ──────────────────────────────────────
+    const handleAvatarClick = () => fileInputRef.current?.click();
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { alert("Please select an image file."); return; }
+        if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const dataUrl = event.target.result;
+            setAvatarPreview(dataUrl);
+            // In production: upload to server and get URL, then updateProfile({ avatar_url: url })
+            // For demo, we'll just use the data URL (note: this won't persist on backend refresh)
+            updateProfile({ avatar_url: dataUrl });
         };
+        reader.readAsDataURL(file);
+    };
 
-
-    /* LOADING */
+    // ─── Section CRUD ───────────────────────────────────────
+    const addItem = (key) => async (data) => {
+        const updated = [...(profile[key] || []), data];
+        await updateProfile({ [key]: updated });
+    };
+    const editItem = (key) => async (index, data) => {
+        const updated = [...(profile[key] || [])];
+        updated[index] = data;
+        await updateProfile({ [key]: updated });
+    };
+    const deleteItem = (key) => async (index) => {
+        const updated = [...(profile[key] || [])];
+        updated.splice(index, 1);
+        await updateProfile({ [key]: updated });
+    };
 
     if (loading) {
-
-        return (
-
-            <div className="page-content page-profile">
-
-                <div className="profile-loading">
-
-                    <div className="profile-skeleton hero" />
-
-                    <div className="profile-skeleton content" />
-
-                    <div className="profile-skeleton content" />
-
-                </div>
-
-            </div>
-
-        );
-
+        return <div className="profile-loading"><div className="skeleton" style={{ height: 200 }} /></div>;
     }
 
+    const initials = user?.fullName?.split(" ").map(n => n[0]).join("").toUpperCase() || "U";
 
     return (
-
         <div className="page-content page-profile">
-
             <div className="profile-page-modern">
+                {/* Profile Header */}
+                <section className="profile-hero-modern">
+                    <div className="profile-hero-pattern" />
+                    <div className="profile-hero-content">
+                        <div className="profile-avatar-wrapper">
+                            <div className="profile-avatar-modern" onClick={handleAvatarClick}>
+                                {avatarPreview ? (
+                                    <img src={avatarPreview} alt={user?.fullName} />
+                                ) : (
+                                    <span>{initials}</span>
+                                )}
+                                <button className="avatar-camera-btn" type="button">
+                                    <Camera size={16} />
+                                </button>
+                                <input type="file" ref={fileInputRef} style={{ display: "none" }} accept="image/*" onChange={handleFileChange} />
+                            </div>
+                        </div>
+                        <div className="profile-identity">
+                            <div className="profile-name-row">
+                                <h1>{user?.fullName || "Your Name"}</h1>
+                                <CheckCircle2 size={20} className="profile-verified-icon" />
+                            </div>
+                            <p className="profile-professional-title">{profile?.title || "Add your professional title"}</p>
+                            <div className="profile-basic-info">
+                                <span><MapPin size={15} /> {profile?.location || "Add location"}</span>
+                                {user?.email && <span><Mail size={15} /> {user.email}</span>}
+                            </div>
+                        </div>
+                        <div className="profile-hero-actions">
+                            <button className="profile-edit-main-btn" onClick={() => window.scrollTo({ top: 300, behavior: "smooth" })}>
+                                <Pencil size={17} /> Edit Profile
+                            </button>
+                        </div>
+                    </div>
+                </section>
 
-
-                {/* HEADER */}
-
-                <ProfileHeader
-                    user={user}
-                    profile={profile}
-                    onEdit={() =>
-                        window.scrollTo({
-                            top: 300,
-                            behavior: "smooth",
-                        })
-                    }
-                />
-
-
-                {/* CONTENT */}
-
+                {/* Content Layout */}
                 <div className="profile-layout-modern">
-
-
-                    {/* MAIN */}
-
                     <main className="profile-main-modern">
+                        {/* About */}
+                        <section className="profile-section-modern">
+                            <div className="profile-section-header">
+                                <div className="section-title-group">
+                                    <div className="section-icon"><UserRound size={18} /></div>
+                                    <h2>About</h2>
+                                </div>
+                                <button className="section-edit-btn" onClick={() => {
+                                    const bio = prompt("Enter your bio:", profile.bio || "");
+                                    if (bio !== null) updateProfile({ bio });
+                                }}><Pencil size={15} /></button>
+                            </div>
+                            <div className="about-content">
+                                {profile.bio ? <p>{profile.bio}</p> : <div className="compact-empty"><UserRound size={20} /><span>Add your professional summary.</span></div>}
+                            </div>
+                        </section>
 
-                        <ProfileAbout
-                            bio={profile.bio}
-                            onSave={
-                                handleProfileUpdate
-                            }
+                        {/* Skills */}
+                        <section className="profile-section-modern skills-section">
+                            <div className="profile-section-header">
+                                <div className="section-title-group">
+                                    <div className="section-icon purple"><Code2 size={18} /></div>
+                                    <h2>Skills</h2>
+                                    <span className="section-count">{profile.skills?.length || 0}</span>
+                                </div>
+                                <button className="section-edit-btn" onClick={() => {
+                                    const skills = prompt("Enter skills (comma separated):", profile.skills?.join(", ") || "");
+                                    if (skills !== null) {
+                                        const arr = skills.split(",").map(s => s.trim()).filter(Boolean);
+                                        updateProfile({ skills: arr });
+                                    }
+                                }}><Pencil size={15} /></button>
+                            </div>
+                            <div className="skills-modern-list">
+                                {profile.skills?.length > 0 ? (
+                                    profile.skills.map((skill, i) => <span key={i} className="skill-pill-modern">{skill}</span>)
+                                ) : (
+                                    <div className="compact-empty"><Code2 size={20} /><span>Add your skills to improve matches.</span></div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Experience */}
+                        <ProfileSection
+                            title="Experience"
+                            icon={BriefcaseBusiness}
+                            items={profile.experience || []}
+                            fields={[
+                                { key: "title", label: "Job Title", placeholder: "Software Engineer" },
+                                { key: "company", label: "Company", placeholder: "TechCorp" },
+                                { key: "location", label: "Location", placeholder: "Remote" },
+                                { key: "startDate", label: "Start Date", type: "date" },
+                                { key: "endDate", label: "End Date", type: "date" },
+                                { key: "current", label: "Currently Working", type: "checkbox" },
+                                { key: "description", label: "Description", type: "textarea", placeholder: "Describe your role...", rows: 4 },
+                            ]}
+                            onAdd={addItem("experience")}
+                            onEdit={editItem("experience")}
+                            onDelete={deleteItem("experience")}
+                            emptyMessage="No experience added yet."
+                            renderItem={(item) => (
+                                <div>
+                                    <h3>{item.title}</h3>
+                                    <span>{item.company}</span>
+                                    <p className="timeline-date">{item.startDate} — {item.current ? "Present" : item.endDate}</p>
+                                    <p className="timeline-description">{item.description}</p>
+                                </div>
+                            )}
                         />
 
-
-                        <ProfileExperience
-                            experience={
-                                profile.experience
-                            }
+                        {/* Education */}
+                        <ProfileSection
+                            title="Education"
+                            icon={GraduationCap}
+                            items={profile.education_items || []}
+                            fields={[
+                                { key: "institution", label: "Institution", placeholder: "University of ..." },
+                                { key: "degree", label: "Degree", placeholder: "Bachelor's" },
+                                { key: "field", label: "Field of Study", placeholder: "Computer Science" },
+                                { key: "startDate", label: "Start Date", type: "date" },
+                                { key: "endDate", label: "End Date", type: "date" },
+                                { key: "description", label: "Description", type: "textarea", rows: 3 },
+                            ]}
+                            onAdd={addItem("education_items")}
+                            onEdit={editItem("education_items")}
+                            onDelete={deleteItem("education_items")}
+                            emptyMessage="No education added yet."
+                            renderItem={(item) => (
+                                <div>
+                                    <h3>{item.degree} in {item.field}</h3>
+                                    <span>{item.institution}</span>
+                                    <p className="timeline-date">{item.startDate} — {item.endDate}</p>
+                                    <p className="timeline-description">{item.description}</p>
+                                </div>
+                            )}
                         />
 
-
-                        <ProfileEducation
-                            education={
-                                profile.education_items
-                            }
+                        {/* Projects */}
+                        <ProfileSection
+                            title="Projects"
+                            icon={Code2}
+                            items={profile.projects || []}
+                            fields={[
+                                { key: "name", label: "Project Name", placeholder: "My Awesome Project" },
+                                { key: "description", label: "Description", type: "textarea", placeholder: "What does it do?", rows: 3 },
+                                { key: "technologies", label: "Technologies", placeholder: "React, Node.js" },
+                                { key: "url", label: "Project URL", placeholder: "https://..." },
+                                { key: "github", label: "GitHub URL", placeholder: "https://github.com/..." },
+                            ]}
+                            onAdd={addItem("projects")}
+                            onEdit={editItem("projects")}
+                            onDelete={deleteItem("projects")}
+                            emptyMessage="No projects added yet."
+                            renderItem={(item) => (
+                                <div>
+                                    <h3>{item.name}</h3>
+                                    <p className="timeline-description">{item.description}</p>
+                                    <div className="project-links">
+                                        {item.url && <a href={item.url} target="_blank" rel="noopener">🔗 Website</a>}
+                                        {item.github && <a href={item.github} target="_blank" rel="noopener">🐙 GitHub</a>}
+                                    </div>
+                                </div>
+                            )}
                         />
 
-
-                        <ProfileProjects
-                            projects={
-                                profile.projects
-                            }
+                        {/* Certifications */}
+                        <ProfileSection
+                            title="Certifications"
+                            icon={Award}
+                            items={profile.certifications || []}
+                            fields={[
+                                { key: "name", label: "Certification Name", placeholder: "AWS Certified Developer" },
+                                { key: "issuer", label: "Issuing Organization", placeholder: "Amazon Web Services" },
+                                { key: "date", label: "Issue Date", type: "date" },
+                                { key: "url", label: "Credential URL", placeholder: "https://..." },
+                            ]}
+                            onAdd={addItem("certifications")}
+                            onEdit={editItem("certifications")}
+                            onDelete={deleteItem("certifications")}
+                            emptyMessage="No certifications added yet."
+                            renderItem={(item) => (
+                                <div>
+                                    <h3>{item.name}</h3>
+                                    <span>{item.issuer}</span>
+                                    <p className="timeline-date">{item.date}</p>
+                                    {item.url && <a href={item.url} target="_blank" rel="noopener">🔗 Credential</a>}
+                                </div>
+                            )}
                         />
-
                     </main>
 
-
-                    {/* SIDEBAR */}
-
+                    {/* Sidebar */}
                     <aside className="profile-sidebar-modern">
-
-                        <ProfileSkills
-                            skills={
-                                profile.skills
-                            }
-                            onSave={
-                                handleProfileUpdate
-                            }
-                        />
-
-
-                        <ProfileCompletion
-                            user={user}
-                            profile={profile}
-                        />
-
-
-                        {/* AI PROFILE TIP */}
-
-                        <div className="profile-ai-tip">
-
-                            <div className="profile-ai-tip-icon">
-                                <Sparkles size={20} />
+                        <div className="profile-completion-card">
+                            <div className="completion-header">
+                                <div>
+                                    <span className="section-label">PROFILE STRENGTH</span>
+                                    <h3>Complete your profile</h3>
+                                </div>
+                                <div className="completion-score">80%</div>
                             </div>
-
-                            <div>
-
-                                <span>
-                                    AI CAREER TIP
-                                </span>
-
-                                <h4>
-                                    A complete profile helps
-                                    AI find better job matches.
-                                </h4>
-
-                                <button>
-                                    Improve my profile
-                                    <ChevronRight size={15} />
-                                </button>
-
+                            <div className="completion-progress"><div className="completion-progress-fill" style={{ width: "80%" }} /></div>
+                            <div className="completion-list">
+                                {[
+                                    { label: "Profile photo", completed: !!avatarPreview },
+                                    { label: "Professional title", completed: !!profile.title },
+                                    { label: "About section", completed: !!profile.bio },
+                                    { label: "Skills", completed: profile.skills?.length > 0 },
+                                    { label: "Experience", completed: profile.experience?.length > 0 },
+                                    { label: "Education", completed: profile.education_items?.length > 0 },
+                                ].map((item) => (
+                                    <div key={item.label} className={`completion-item ${item.completed ? "completed" : ""}`}>
+                                        {item.completed ? <CheckCircle2 size={17} /> : <Circle size={17} />}
+                                        <span>{item.label}</span>
+                                    </div>
+                                ))}
                             </div>
-
                         </div>
 
+                        <div className="profile-ai-tip">
+                            <div className="profile-ai-tip-icon"><Sparkles size={20} /></div>
+                            <div>
+                                <span>AI CAREER TIP</span>
+                                <h4>A complete profile helps AI find better job matches.</h4>
+                                <button>Improve my profile <ChevronRight size={15} /></button>
+                            </div>
+                        </div>
                     </aside>
-
                 </div>
 
-
-                {/* SAVING INDICATOR */}
-
-                {saving && (
-
-                    <div className="profile-saving">
-
-                        <Loader2
-                            size={17}
-                            className="spin"
-                        />
-
-                        Saving changes...
-
-                    </div>
-
-                )}
-
-
-                {/* TOAST */}
-
-                {message && (
-
-                    <div className="profile-toast">
-
-                        <CheckCircle2 size={18} />
-
-                        {message}
-
-                    </div>
-
-                )}
-
+                {/* Save Indicator */}
+                {saving && <div className="profile-saving"><Loader2 size={17} className="spin" /> Saving changes...</div>}
+                {message && <div className="profile-toast"><CheckCircle2 size={18} /> {message}</div>}
             </div>
-
         </div>
-
     );
-
 }
 
 export default Profile;
