@@ -18,6 +18,8 @@ import {
     ChevronRight,
     Loader2,
     Trash2,
+    FileText,
+    Link2,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -182,6 +184,12 @@ function Profile({ user }) {
     const fileInputRef = useRef(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
 
+    // ─── Editing states for inline editors ──────────────────
+    const [editingAbout, setEditingAbout] = useState(false);
+    const [editingSkills, setEditingSkills] = useState(false);
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [editingLocation, setEditingLocation] = useState(false);
+
     // ─── Fetch Profile ──────────────────────────────────────
     const fetchProfile = async () => {
         try {
@@ -244,8 +252,6 @@ function Profile({ user }) {
         reader.onload = (event) => {
             const dataUrl = event.target.result;
             setAvatarPreview(dataUrl);
-            // In production: upload to server and get URL, then updateProfile({ avatar_url: url })
-            // For demo, we'll just use the data URL (note: this won't persist on backend refresh)
             updateProfile({ avatar_url: dataUrl });
         };
         reader.readAsDataURL(file);
@@ -276,7 +282,7 @@ function Profile({ user }) {
     return (
         <div className="page-content page-profile">
             <div className="profile-page-modern">
-                {/* Profile Header */}
+                {/* ─── Profile Header ────────────────────────────────── */}
                 <section className="profile-hero-modern">
                     <div className="profile-hero-pattern" />
                     <div className="profile-hero-content">
@@ -298,9 +304,75 @@ function Profile({ user }) {
                                 <h1>{user?.fullName || "Your Name"}</h1>
                                 <CheckCircle2 size={20} className="profile-verified-icon" />
                             </div>
-                            <p className="profile-professional-title">{profile?.title || "Add your professional title"}</p>
+                            <div className="profile-title-editable">
+                                {editingTitle ? (
+                                    <div className="inline-edit-field">
+                                        <input
+                                            type="text"
+                                            value={profile.title || ""}
+                                            onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                                            placeholder="Add your professional title"
+                                            autoFocus
+                                        />
+                                        <button
+                                            className="button button-primary small-button"
+                                            onClick={() => {
+                                                updateProfile({ title: profile.title });
+                                                setEditingTitle(false);
+                                            }}
+                                        >
+                                            <Save size={16} /> Save
+                                        </button>
+                                        <button
+                                            className="button button-secondary small-button"
+                                            onClick={() => setEditingTitle(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="profile-title-display">
+                                        <p className="profile-professional-title">{profile?.title || "Add your professional title"}</p>
+                                        <button className="icon-btn" onClick={() => setEditingTitle(true)}><Pencil size={15} /></button>
+                                    </div>
+                                )}
+                            </div>
                             <div className="profile-basic-info">
-                                <span><MapPin size={15} /> {profile?.location || "Add location"}</span>
+                                <div className="profile-location-editable">
+                                    {editingLocation ? (
+                                        <div className="inline-edit-field inline-edit-sm">
+                                            <MapPin size={15} />
+                                            <input
+                                                type="text"
+                                                value={profile.location || ""}
+                                                onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                                                placeholder="Add location"
+                                                autoFocus
+                                            />
+                                            <button
+                                                className="button button-primary small-button"
+                                                onClick={() => {
+                                                    updateProfile({ location: profile.location });
+                                                    setEditingLocation(false);
+                                                }}
+                                            >
+                                                <Save size={14} /> Save
+                                            </button>
+                                            <button
+                                                className="button button-secondary small-button"
+                                                onClick={() => setEditingLocation(false)}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <span>
+                                            <MapPin size={15} />
+                                            {profile?.location || "Add location"}
+                                            <button className="icon-btn" onClick={() => setEditingLocation(true)}><Pencil size={12} /></button>
+                                        </span>
+                                    )}
+                                </div>
                                 {user?.email && <span><Mail size={15} /> {user.email}</span>}
                             </div>
                         </div>
@@ -312,27 +384,47 @@ function Profile({ user }) {
                     </div>
                 </section>
 
-                {/* Content Layout */}
+                {/* ─── Content Layout ────────────────────────────────── */}
                 <div className="profile-layout-modern">
                     <main className="profile-main-modern">
-                        {/* About */}
+                        {/* ─── About ──────────────────────────────────────── */}
                         <section className="profile-section-modern">
                             <div className="profile-section-header">
                                 <div className="section-title-group">
                                     <div className="section-icon"><UserRound size={18} /></div>
                                     <h2>About</h2>
                                 </div>
-                                <button className="section-edit-btn" onClick={() => {
-                                    const bio = prompt("Enter your bio:", profile.bio || "");
-                                    if (bio !== null) updateProfile({ bio });
-                                }}><Pencil size={15} /></button>
+                                <button className="section-edit-btn" onClick={() => setEditingAbout(true)}>
+                                    <Pencil size={15} />
+                                </button>
                             </div>
                             <div className="about-content">
-                                {profile.bio ? <p>{profile.bio}</p> : <div className="compact-empty"><UserRound size={20} /><span>Add your professional summary.</span></div>}
+                                {profile.bio ? (
+                                    <p>{profile.bio}</p>
+                                ) : (
+                                    <div className="compact-empty">
+                                        <UserRound size={20} />
+                                        <span>Add your professional summary.</span>
+                                    </div>
+                                )}
                             </div>
+                            <InlineEditor
+                                isOpen={editingAbout}
+                                onClose={() => setEditingAbout(false)}
+                                onSave={async (data) => {
+                                    await updateProfile({ bio: data.bio });
+                                    setEditingAbout(false);
+                                }}
+                                initialData={{ bio: profile.bio }}
+                                fields={[
+                                    { key: "bio", label: "Bio", type: "textarea", placeholder: "Tell us about yourself...", rows: 5 },
+                                ]}
+                                title="About"
+                                isEditing={true}
+                            />
                         </section>
 
-                        {/* Skills */}
+                        {/* ─── Skills ────────────────────────────────────── */}
                         <section className="profile-section-modern skills-section">
                             <div className="profile-section-header">
                                 <div className="section-title-group">
@@ -340,13 +432,9 @@ function Profile({ user }) {
                                     <h2>Skills</h2>
                                     <span className="section-count">{profile.skills?.length || 0}</span>
                                 </div>
-                                <button className="section-edit-btn" onClick={() => {
-                                    const skills = prompt("Enter skills (comma separated):", profile.skills?.join(", ") || "");
-                                    if (skills !== null) {
-                                        const arr = skills.split(",").map(s => s.trim()).filter(Boolean);
-                                        updateProfile({ skills: arr });
-                                    }
-                                }}><Pencil size={15} /></button>
+                                <button className="section-edit-btn" onClick={() => setEditingSkills(true)}>
+                                    <Pencil size={15} />
+                                </button>
                             </div>
                             <div className="skills-modern-list">
                                 {profile.skills?.length > 0 ? (
@@ -355,9 +443,24 @@ function Profile({ user }) {
                                     <div className="compact-empty"><Code2 size={20} /><span>Add your skills to improve matches.</span></div>
                                 )}
                             </div>
+                            <InlineEditor
+                                isOpen={editingSkills}
+                                onClose={() => setEditingSkills(false)}
+                                onSave={async (data) => {
+                                    const arr = data.skills.split(",").map(s => s.trim()).filter(Boolean);
+                                    await updateProfile({ skills: arr });
+                                    setEditingSkills(false);
+                                }}
+                                initialData={{ skills: profile.skills?.join(", ") || "" }}
+                                fields={[
+                                    { key: "skills", label: "Skills (comma separated)", placeholder: "React, Node.js, Python" },
+                                ]}
+                                title="Skills"
+                                isEditing={true}
+                            />
                         </section>
 
-                        {/* Experience */}
+                        {/* ─── Experience ────────────────────────────────── */}
                         <ProfileSection
                             title="Experience"
                             icon={BriefcaseBusiness}
@@ -385,7 +488,7 @@ function Profile({ user }) {
                             )}
                         />
 
-                        {/* Education */}
+                        {/* ─── Education ─────────────────────────────────── */}
                         <ProfileSection
                             title="Education"
                             icon={GraduationCap}
@@ -412,7 +515,7 @@ function Profile({ user }) {
                             )}
                         />
 
-                        {/* Projects */}
+                        {/* ─── Projects ──────────────────────────────────── */}
                         <ProfileSection
                             title="Projects"
                             icon={Code2}
@@ -433,14 +536,14 @@ function Profile({ user }) {
                                     <h3>{item.name}</h3>
                                     <p className="timeline-description">{item.description}</p>
                                     <div className="project-links">
-                                        {item.url && <a href={item.url} target="_blank" rel="noopener">🔗 Website</a>}
-                                        {item.github && <a href={item.github} target="_blank" rel="noopener">🐙 GitHub</a>}
+                                        {item.url && <a href={item.url} target="_blank" rel="noopener"><Link2 size={14} /> Website</a>}
+                                        {item.github && <a href={item.github} target="_blank" rel="noopener"><Code2 size={14} /> GitHub</a>}
                                     </div>
                                 </div>
                             )}
                         />
 
-                        {/* Certifications */}
+                        {/* ─── Certifications ────────────────────────────── */}
                         <ProfileSection
                             title="Certifications"
                             icon={Award}
@@ -460,13 +563,13 @@ function Profile({ user }) {
                                     <h3>{item.name}</h3>
                                     <span>{item.issuer}</span>
                                     <p className="timeline-date">{item.date}</p>
-                                    {item.url && <a href={item.url} target="_blank" rel="noopener">🔗 Credential</a>}
+                                    {item.url && <a href={item.url} target="_blank" rel="noopener"><Link2 size={14} /> Credential</a>}
                                 </div>
                             )}
                         />
                     </main>
 
-                    {/* Sidebar */}
+                    {/* ─── Sidebar ────────────────────────────────────── */}
                     <aside className="profile-sidebar-modern">
                         <div className="profile-completion-card">
                             <div className="completion-header">
@@ -505,7 +608,7 @@ function Profile({ user }) {
                     </aside>
                 </div>
 
-                {/* Save Indicator */}
+                {/* ─── Save Indicator ───────────────────────────────── */}
                 {saving && <div className="profile-saving"><Loader2 size={17} className="spin" /> Saving changes...</div>}
                 {message && <div className="profile-toast"><CheckCircle2 size={18} /> {message}</div>}
             </div>
