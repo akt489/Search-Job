@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { createClient } from '@supabase/supabase-js';
 import authenticate from '../middleware/authMiddleware.js';
-import pool from '../config/db.js';
+import pool from '../db.js';
 
 const router = express.Router();
 
