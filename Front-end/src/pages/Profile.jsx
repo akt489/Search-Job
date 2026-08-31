@@ -20,6 +20,9 @@ import {
     Trash2,
     FileText,
     Link2,
+    Upload,
+    File,
+    XCircle,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -28,6 +31,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "";
 function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isEditing }) {
     const [formData, setFormData] = useState({});
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         if (initialData) setFormData(initialData);
@@ -47,6 +51,51 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
         }
     };
 
+    // ─── File Upload Handler ────────────────────────────────
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type & size
+        const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            alert('Only JPEG, PNG, or PDF files are allowed.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File must be under 5MB.');
+            return;
+        }
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('section', title.toLowerCase()); // 'education', 'experience', etc.
+        formData.append('itemIndex', '0'); // Will be replaced with actual index in parent
+
+        try {
+            const token = localStorage.getItem('jobscout-token');
+            const res = await fetch(`${API_BASE}/profile/upload-file`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData,
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setFormData({ ...formData, file_url: data.fileUrl });
+                alert('File uploaded successfully!');
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Upload failed.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Upload failed.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     return (
         <div className="inline-editor glass-card">
             <div className="editor-header">
@@ -54,41 +103,74 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
                 <button className="editor-close" onClick={onClose}><X size={18} /></button>
             </div>
             <div className="editor-body">
-                {fields.map((field) => (
-                    <div className="form-group" key={field.key}>
-                        <label>{field.label}</label>
-                        {field.type === "textarea" ? (
-                            <textarea
-                                value={formData[field.key] || ""}
-                                onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                                placeholder={field.placeholder}
-                                rows={field.rows || 3}
-                            />
-                        ) : field.type === "checkbox" ? (
-                            <div className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={formData[field.key] || false}
-                                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.checked })}
-                                />
-                                <span>{field.label}</span>
+                {fields.map((field) => {
+                    if (field.key === 'file_upload') {
+                        return (
+                            <div className="form-group" key={field.key}>
+                                <label>{field.label}</label>
+                                <div className="file-upload-wrapper">
+                                    <input
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                        onChange={handleFileUpload}
+                                        disabled={uploading}
+                                    />
+                                    {uploading && <Loader2 size={18} className="spin" />}
+                                    {formData.file_url && (
+                                        <div className="uploaded-file">
+                                            <File size={16} />
+                                            <a href={formData.file_url} target="_blank" rel="noopener noreferrer">
+                                                View Attachment
+                                            </a>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, file_url: '' })}
+                                            >
+                                                <XCircle size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        ) : field.type === "date" ? (
-                            <input
-                                type="date"
-                                value={formData[field.key] || ""}
-                                onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                            />
-                        ) : (
-                            <input
-                                type={field.type || "text"}
-                                value={formData[field.key] || ""}
-                                onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                                placeholder={field.placeholder}
-                            />
-                        )}
-                    </div>
-                ))}
+                        );
+                    }
+                    // Regular field rendering
+                    return (
+                        <div className="form-group" key={field.key}>
+                            <label>{field.label}</label>
+                            {field.type === "textarea" ? (
+                                <textarea
+                                    value={formData[field.key] || ""}
+                                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                    placeholder={field.placeholder}
+                                    rows={field.rows || 3}
+                                />
+                            ) : field.type === "checkbox" ? (
+                                <div className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData[field.key] || false}
+                                        onChange={(e) => setFormData({ ...formData, [field.key]: e.target.checked })}
+                                    />
+                                    <span>{field.label}</span>
+                                </div>
+                            ) : field.type === "date" ? (
+                                <input
+                                    type="date"
+                                    value={formData[field.key] || ""}
+                                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                />
+                            ) : (
+                                <input
+                                    type={field.type || "text"}
+                                    value={formData[field.key] || ""}
+                                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                                    placeholder={field.placeholder}
+                                />
+                            )}
+                        </div>
+                    );
+                })}
             </div>
             <div className="editor-actions">
                 <button className="button button-primary small-button" onClick={handleSubmit} disabled={loading}>
@@ -100,11 +182,12 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
     );
 }
 
-// ─── Profile Section Component ────────────────────────────
+// ─── ProfileSection ────────────────────────────────────────
 function ProfileSection({ title, icon: Icon, items, fields, onAdd, onEdit, onDelete, emptyMessage, renderItem }) {
     const [editingIndex, setEditingIndex] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
 
+    // Pass the actual index to the editor for file upload
     const handleSave = async (data) => {
         if (editingIndex !== null) {
             await onEdit(editingIndex, data);
@@ -139,7 +222,16 @@ function ProfileSection({ title, icon: Icon, items, fields, onAdd, onEdit, onDel
                             <div className="timeline-marker"><Icon size={15} /></div>
                             <div className="timeline-content">
                                 <div className="timeline-heading">
-                                    <div>{renderItem(item)}</div>
+                                    <div>
+                                        {renderItem(item)}
+                                        {item.file_url && (
+                                            <div className="file-attachment">
+                                                <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                                    <FileText size={14} /> View Attachment
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="item-actions">
                                         <button className="icon-btn" onClick={() => setEditingIndex(index)}><Pencil size={15} /></button>
                                         <button className="icon-btn danger" onClick={() => onDelete(index)}><Trash2 size={15} /></button>
@@ -175,7 +267,7 @@ function Profile({ user }) {
         bio: "",
         title: "",
         experience: [],
-        education_items: [],
+        education: [],
         projects: [],
         certifications: [],
         avatar_url: "",
@@ -184,7 +276,7 @@ function Profile({ user }) {
     const fileInputRef = useRef(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
 
-    // ─── Editing states for inline editors ──────────────────
+    // Editing states
     const [editingAbout, setEditingAbout] = useState(false);
     const [editingSkills, setEditingSkills] = useState(false);
     const [editingTitle, setEditingTitle] = useState(false);
@@ -242,7 +334,6 @@ function Profile({ user }) {
 
     // ─── Avatar Upload ──────────────────────────────────────
     const handleAvatarClick = () => fileInputRef.current?.click();
-
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -399,14 +490,7 @@ function Profile({ user }) {
                                 </button>
                             </div>
                             <div className="about-content">
-                                {profile.bio ? (
-                                    <p>{profile.bio}</p>
-                                ) : (
-                                    <div className="compact-empty">
-                                        <UserRound size={20} />
-                                        <span>Add your professional summary.</span>
-                                    </div>
-                                )}
+                                {profile.bio ? <p>{profile.bio}</p> : <div className="compact-empty"><UserRound size={20} /><span>Add your professional summary.</span></div>}
                             </div>
                             <InlineEditor
                                 isOpen={editingAbout}
@@ -473,6 +557,7 @@ function Profile({ user }) {
                                 { key: "endDate", label: "End Date", type: "date" },
                                 { key: "current", label: "Currently Working", type: "checkbox" },
                                 { key: "description", label: "Description", type: "textarea", placeholder: "Describe your role...", rows: 4 },
+                                { key: "file_upload", label: "Attachment (Certificate, etc.)", type: "file" },
                             ]}
                             onAdd={addItem("experience")}
                             onEdit={editItem("experience")}
@@ -484,6 +569,13 @@ function Profile({ user }) {
                                     <span>{item.company}</span>
                                     <p className="timeline-date">{item.startDate} — {item.current ? "Present" : item.endDate}</p>
                                     <p className="timeline-description">{item.description}</p>
+                                    {item.file_url && (
+                                        <div className="file-attachment">
+                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                                <FileText size={14} /> View Attachment
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         />
@@ -492,7 +584,7 @@ function Profile({ user }) {
                         <ProfileSection
                             title="Education"
                             icon={GraduationCap}
-                            items={profile.education_items || []}
+                            items={profile.education || []}
                             fields={[
                                 { key: "institution", label: "Institution", placeholder: "University of ..." },
                                 { key: "degree", label: "Degree", placeholder: "Bachelor's" },
@@ -500,10 +592,11 @@ function Profile({ user }) {
                                 { key: "startDate", label: "Start Date", type: "date" },
                                 { key: "endDate", label: "End Date", type: "date" },
                                 { key: "description", label: "Description", type: "textarea", rows: 3 },
+                                { key: "file_upload", label: "Attachment (Diploma, Certificate)", type: "file" },
                             ]}
-                            onAdd={addItem("education_items")}
-                            onEdit={editItem("education_items")}
-                            onDelete={deleteItem("education_items")}
+                            onAdd={addItem("education")}
+                            onEdit={editItem("education")}
+                            onDelete={deleteItem("education")}
                             emptyMessage="No education added yet."
                             renderItem={(item) => (
                                 <div>
@@ -511,6 +604,13 @@ function Profile({ user }) {
                                     <span>{item.institution}</span>
                                     <p className="timeline-date">{item.startDate} — {item.endDate}</p>
                                     <p className="timeline-description">{item.description}</p>
+                                    {item.file_url && (
+                                        <div className="file-attachment">
+                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                                <FileText size={14} /> View Attachment
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         />
@@ -526,6 +626,7 @@ function Profile({ user }) {
                                 { key: "technologies", label: "Technologies", placeholder: "React, Node.js" },
                                 { key: "url", label: "Project URL", placeholder: "https://..." },
                                 { key: "github", label: "GitHub URL", placeholder: "https://github.com/..." },
+                                { key: "file_upload", label: "Project Image/PDF", type: "file" },
                             ]}
                             onAdd={addItem("projects")}
                             onEdit={editItem("projects")}
@@ -539,6 +640,13 @@ function Profile({ user }) {
                                         {item.url && <a href={item.url} target="_blank" rel="noopener"><Link2 size={14} /> Website</a>}
                                         {item.github && <a href={item.github} target="_blank" rel="noopener"><Code2 size={14} /> GitHub</a>}
                                     </div>
+                                    {item.file_url && (
+                                        <div className="file-attachment">
+                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                                <FileText size={14} /> View Attachment
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         />
@@ -553,6 +661,7 @@ function Profile({ user }) {
                                 { key: "issuer", label: "Issuing Organization", placeholder: "Amazon Web Services" },
                                 { key: "date", label: "Issue Date", type: "date" },
                                 { key: "url", label: "Credential URL", placeholder: "https://..." },
+                                { key: "file_upload", label: "Certificate File (PDF/Image)", type: "file" },
                             ]}
                             onAdd={addItem("certifications")}
                             onEdit={editItem("certifications")}
@@ -564,6 +673,13 @@ function Profile({ user }) {
                                     <span>{item.issuer}</span>
                                     <p className="timeline-date">{item.date}</p>
                                     {item.url && <a href={item.url} target="_blank" rel="noopener"><Link2 size={14} /> Credential</a>}
+                                    {item.file_url && (
+                                        <div className="file-attachment">
+                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+                                                <FileText size={14} /> View Certificate
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         />
@@ -587,7 +703,7 @@ function Profile({ user }) {
                                     { label: "About section", completed: !!profile.bio },
                                     { label: "Skills", completed: profile.skills?.length > 0 },
                                     { label: "Experience", completed: profile.experience?.length > 0 },
-                                    { label: "Education", completed: profile.education_items?.length > 0 },
+                                    { label: "Education", completed: profile.education?.length > 0 },
                                 ].map((item) => (
                                     <div key={item.label} className={`completion-item ${item.completed ? "completed" : ""}`}>
                                         {item.completed ? <CheckCircle2 size={17} /> : <Circle size={17} />}

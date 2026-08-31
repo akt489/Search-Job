@@ -2,6 +2,10 @@ import express from 'express';
 import axios from 'axios';
 import authenticate from '../middleware/authMiddleware.js';
 import pool from '../db.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 const router = express.Router();
 
@@ -366,5 +370,119 @@ async function generateRecommendations(userId, forceRefresh = false) {
         isFresh: true
     };
 }
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, '..', 'uploads', 'profile');
+
+// Ensure upload directory exists
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for profile attachments
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, `profile-${req.user.id}-${uniqueSuffix}${ext}`);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('File type not allowed. Allowed: JPG, PNG, GIF, PDF, DOC, DOCX'), false);
+    }
+};
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter
+});
+
+// ─── Upload attachment for a profile section item ──────
+router.post('/profile/upload-attachment', authenticate, upload.single('file'), async (req, res) => {
+    try {
+        const { section, itemIndex } = req.body;
+        if (!section || itemIndex === undefined) {
+            return res.status(400).json({ error: 'section and itemIndex are required' });
+        }
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const allowedSections = ['experience', 'education', 'certification'];
+        if (!allowedSections.includes(section)) {
+            return res.status(400).json({ error: 'Invalid section' });
+        }
+
+        // Store file info in database
+        const { rows } = await pool.query(
+            `INSERT INTO profile_attachments (user_id, section, item_index, file_name, file_url, file_type, file_size)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [req.user.id, section, itemIndex, req.file.originalname, `/uploads/profile/${req.file.filename}`, req.file.mimetype, req.file.size]
+        );
+
+        res.json({
+            success: true,
+            attachmentId: rows[0].id,
+            fileUrl: `/uploads/profile/${req.file.filename}`,
+            fileName: req.file.originalname,
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: 'Failed to upload file' });
+    }
+});
+
+// ─── Get attachments for a specific section/item ──────
+router.get('/profile/attachments', authenticate, async (req, res) => {
+    try {
+        const { section, itemIndex } = req.query;
+        if (!section || itemIndex === undefined) {
+            return res.status(400).json({ error: 'section and itemIndex are required' });
+        }
+        const { rows } = await pool.query(
+            `SELECT id, file_name, file_url, file_type, file_size, uploaded_at
+             FROM profile_attachments
+             WHERE user_id = $1 AND section = $2 AND item_index = $3`,
+            [req.user.id, section, parseInt(itemIndex)]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('Fetch attachments error:', error);
+        res.status(500).json({ error: 'Failed to fetch attachments' });
+    }
+});
+
+// ─── Delete attachment ──────────────────────────────────
+router.delete('/profile/attachment/:id', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rows } = await pool.query(
+            `DELETE FROM profile_attachments WHERE id = $1 AND user_id = $2 RETURNING file_url`,
+            [id, req.user.id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Attachment not found' });
+        }
+        // Delete the physical file
+        const filePath = path.join(__dirname, '..', rows[0].file_url);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+        res.json({ success: true, message: 'Attachment deleted' });
+    } catch (error) {
+        console.error('Delete attachment error:', error);
+        res.status(500).json({ error: 'Failed to delete attachment' });
+    }
+});
 
 export default router;

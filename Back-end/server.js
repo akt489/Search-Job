@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // ─── Route Imports ──────────────────────────────────────────
 import authRoutes from './routes/authRoutes.js';
@@ -11,11 +13,14 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
 import googleAuthRoutes from './routes/googleAuth.js';
 import aiRoutes from './routes/aiRoutes.js';
+import profileUploadRoutes from './routes/profileUpload.js';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ─── 1. TRUST PROXY (Railway) ──────────────────────────────
 app.set('trust proxy', true);
@@ -24,6 +29,8 @@ app.set('trust proxy', true);
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/profile', profileUploadRoutes);
 
 // ─── 3. CORS (MUST BE BEFORE ANY ROUTES) ───────────────────
 const allowedOrigins = [

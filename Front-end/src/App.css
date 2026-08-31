@@ -5360,3 +5360,76 @@
     flex-direction: column;
   }
 }
+
+/* ─── File Upload ─────────────────────────────────────────── */
+.file-upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-upload-wrapper input[type="file"] {
+  padding: 8px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-alt);
+  cursor: pointer;
+}
+
+.file-upload-wrapper input[type="file"]:hover {
+  border-color: var(--accent);
+}
+
+.uploaded-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+
+.uploaded-file a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.uploaded-file a:hover {
+  text-decoration: underline;
+}
+
+.uploaded-file button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.uploaded-file button:hover {
+  color: var(--danger);
+}
+
+.file-attachment {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.file-attachment a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.file-attachment a:hover {
+  text-decoration: underline;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
