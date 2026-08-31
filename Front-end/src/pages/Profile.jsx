@@ -20,9 +20,6 @@ import {
     Trash2,
     FileText,
     Link2,
-    Upload,
-    File,
-    XCircle,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -51,12 +48,9 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
         }
     };
 
-    // ─── File Upload Handler ────────────────────────────────
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        // Validate file type & size
         const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         if (!validTypes.includes(file.type)) {
             alert('Only JPEG, PNG, or PDF files are allowed.');
@@ -66,13 +60,11 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
             alert('File must be under 5MB.');
             return;
         }
-
         setUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('section', title.toLowerCase()); // 'education', 'experience', etc.
-        formData.append('itemIndex', '0'); // Will be replaced with actual index in parent
-
+        formData.append('section', title.toLowerCase());
+        formData.append('itemIndex', '0');
         try {
             const token = localStorage.getItem('jobscout-token');
             const res = await fetch(`${API_BASE}/profile/upload-file`, {
@@ -118,7 +110,7 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
                                     {uploading && <Loader2 size={18} className="spin" />}
                                     {formData.file_url && (
                                         <div className="uploaded-file">
-                                            <File size={16} />
+                                            <FileText size={16} />
                                             <a href={formData.file_url} target="_blank" rel="noopener noreferrer">
                                                 View Attachment
                                             </a>
@@ -126,7 +118,7 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, file_url: '' })}
                                             >
-                                                <XCircle size={16} />
+                                                <X size={16} />
                                             </button>
                                         </div>
                                     )}
@@ -134,7 +126,6 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
                             </div>
                         );
                     }
-                    // Regular field rendering
                     return (
                         <div className="form-group" key={field.key}>
                             <label>{field.label}</label>
@@ -182,12 +173,14 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
     );
 }
 
-// ─── ProfileSection ────────────────────────────────────────
+// ─── ProfileSection (with safe array handling) ────────────
 function ProfileSection({ title, icon: Icon, items, fields, onAdd, onEdit, onDelete, emptyMessage, renderItem }) {
     const [editingIndex, setEditingIndex] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
 
-    // Pass the actual index to the editor for file upload
+    // ✅ Ensure items is always an array
+    const safeItems = Array.isArray(items) ? items : [];
+
     const handleSave = async (data) => {
         if (editingIndex !== null) {
             await onEdit(editingIndex, data);
@@ -210,14 +203,14 @@ function ProfileSection({ title, icon: Icon, items, fields, onAdd, onEdit, onDel
                 </button>
             </div>
 
-            {items.length === 0 ? (
+            {safeItems.length === 0 ? (
                 <div className="compact-empty">
                     <Icon size={20} />
                     <span>{emptyMessage}</span>
                 </div>
             ) : (
                 <div className="timeline-list">
-                    {items.map((item, index) => (
+                    {safeItems.map((item, index) => (
                         <div key={index} className="timeline-item">
                             <div className="timeline-marker"><Icon size={15} /></div>
                             <div className="timeline-content">
@@ -247,7 +240,7 @@ function ProfileSection({ title, icon: Icon, items, fields, onAdd, onEdit, onDel
                 isOpen={editingIndex !== null || isAdding}
                 onClose={() => { setEditingIndex(null); setIsAdding(false); }}
                 onSave={handleSave}
-                initialData={editingIndex !== null ? items[editingIndex] : {}}
+                initialData={editingIndex !== null ? safeItems[editingIndex] : {}}
                 fields={fields}
                 title={title}
                 isEditing={editingIndex !== null}
@@ -276,7 +269,6 @@ function Profile({ user }) {
     const fileInputRef = useRef(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
 
-    // Editing states
     const [editingAbout, setEditingAbout] = useState(false);
     const [editingSkills, setEditingSkills] = useState(false);
     const [editingTitle, setEditingTitle] = useState(false);
@@ -291,7 +283,20 @@ function Profile({ user }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                setProfile((prev) => ({ ...prev, ...data }));
+                // ✅ Sanitize arrays – ensure they are always arrays
+                setProfile((prev) => ({
+                    ...prev,
+                    ...data,
+                    skills: Array.isArray(data.skills) ? data.skills : [],
+                    experience: Array.isArray(data.experience) ? data.experience : [],
+                    education: Array.isArray(data.education) ? data.education : [],
+                    projects: Array.isArray(data.projects) ? data.projects : [],
+                    certifications: Array.isArray(data.certifications) ? data.certifications : [],
+                    location: data.location || "",
+                    bio: data.bio || "",
+                    title: data.title || "",
+                    avatar_url: data.avatar_url || "",
+                }));
                 if (data.avatar_url) setAvatarPreview(data.avatar_url);
             }
         } catch (err) {
@@ -548,7 +553,7 @@ function Profile({ user }) {
                         <ProfileSection
                             title="Experience"
                             icon={BriefcaseBusiness}
-                            items={profile.experience || []}
+                            items={profile.experience}
                             fields={[
                                 { key: "title", label: "Job Title", placeholder: "Software Engineer" },
                                 { key: "company", label: "Company", placeholder: "TechCorp" },
@@ -569,13 +574,6 @@ function Profile({ user }) {
                                     <span>{item.company}</span>
                                     <p className="timeline-date">{item.startDate} — {item.current ? "Present" : item.endDate}</p>
                                     <p className="timeline-description">{item.description}</p>
-                                    {item.file_url && (
-                                        <div className="file-attachment">
-                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-                                                <FileText size={14} /> View Attachment
-                                            </a>
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         />
@@ -584,7 +582,7 @@ function Profile({ user }) {
                         <ProfileSection
                             title="Education"
                             icon={GraduationCap}
-                            items={profile.education || []}
+                            items={profile.education}
                             fields={[
                                 { key: "institution", label: "Institution", placeholder: "University of ..." },
                                 { key: "degree", label: "Degree", placeholder: "Bachelor's" },
@@ -604,13 +602,6 @@ function Profile({ user }) {
                                     <span>{item.institution}</span>
                                     <p className="timeline-date">{item.startDate} — {item.endDate}</p>
                                     <p className="timeline-description">{item.description}</p>
-                                    {item.file_url && (
-                                        <div className="file-attachment">
-                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-                                                <FileText size={14} /> View Attachment
-                                            </a>
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         />
@@ -619,7 +610,7 @@ function Profile({ user }) {
                         <ProfileSection
                             title="Projects"
                             icon={Code2}
-                            items={profile.projects || []}
+                            items={profile.projects}
                             fields={[
                                 { key: "name", label: "Project Name", placeholder: "My Awesome Project" },
                                 { key: "description", label: "Description", type: "textarea", placeholder: "What does it do?", rows: 3 },
@@ -637,16 +628,9 @@ function Profile({ user }) {
                                     <h3>{item.name}</h3>
                                     <p className="timeline-description">{item.description}</p>
                                     <div className="project-links">
-                                        {item.url && <a href={item.url} target="_blank" rel="noopener"><Link2 size={14} /> Website</a>}
-                                        {item.github && <a href={item.github} target="_blank" rel="noopener"><Code2 size={14} /> GitHub</a>}
+                                        {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer"><Link2 size={14} /> Website</a>}
+                                        {item.github && <a href={item.github} target="_blank" rel="noopener noreferrer"><Code2 size={14} /> GitHub</a>}
                                     </div>
-                                    {item.file_url && (
-                                        <div className="file-attachment">
-                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-                                                <FileText size={14} /> View Attachment
-                                            </a>
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         />
@@ -655,7 +639,7 @@ function Profile({ user }) {
                         <ProfileSection
                             title="Certifications"
                             icon={Award}
-                            items={profile.certifications || []}
+                            items={profile.certifications}
                             fields={[
                                 { key: "name", label: "Certification Name", placeholder: "AWS Certified Developer" },
                                 { key: "issuer", label: "Issuing Organization", placeholder: "Amazon Web Services" },
@@ -672,14 +656,7 @@ function Profile({ user }) {
                                     <h3>{item.name}</h3>
                                     <span>{item.issuer}</span>
                                     <p className="timeline-date">{item.date}</p>
-                                    {item.url && <a href={item.url} target="_blank" rel="noopener"><Link2 size={14} /> Credential</a>}
-                                    {item.file_url && (
-                                        <div className="file-attachment">
-                                            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-                                                <FileText size={14} /> View Certificate
-                                            </a>
-                                        </div>
-                                    )}
+                                    {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer"><Link2 size={14} /> Credential</a>}
                                 </div>
                             )}
                         />
