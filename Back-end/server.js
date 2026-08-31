@@ -56,6 +56,7 @@ const apiLimiter = rateLimit({
     max: 120,
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false }, // ✅ Disable the validation check
 });
 
 // ─── 5. ROUTES ──────────────────────────────────────────────
