@@ -31,7 +31,9 @@ function InlineEditor({ isOpen, onClose, onSave, initialData, fields, title, isE
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
-        if (initialData) setFormData(initialData);
+        if (!initialData) return undefined;
+        const timer = window.setTimeout(() => setFormData(initialData), 0);
+        return () => window.clearTimeout(timer);
     }, [initialData]);
 
     if (!isOpen) return null;
@@ -306,7 +308,10 @@ function Profile({ user }) {
         }
     };
 
-    useEffect(() => { fetchProfile(); }, []);
+    useEffect(() => {
+        const timer = window.setTimeout(fetchProfile, 0);
+        return () => window.clearTimeout(timer);
+    }, []);
 
     // ─── Update Profile ─────────────────────────────────────
     const updateProfile = async (updates) => {

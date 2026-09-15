@@ -33,7 +33,7 @@ function ForgotPassword() {
             } else {
                 setError(data.error || 'Something went wrong. Please try again.');
             }
-        } catch (err) {
+        } catch {
             setError('Unable to reach the server. Please try again later.');
         } finally {
             setLoading(false);

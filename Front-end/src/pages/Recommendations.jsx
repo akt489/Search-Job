@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-function Recommendations({ user }) {
+function Recommendations() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [recommendations, setRecommendations] = useState({
@@ -64,7 +64,8 @@ function Recommendations({ user }) {
     };
 
     useEffect(() => {
-        fetchRecommendations();
+        const timer = window.setTimeout(fetchRecommendations, 0);
+        return () => window.clearTimeout(timer);
     }, []);
 
     if (loading) {

@@ -44,7 +44,7 @@ function Login({ onLogin }) {
 
             onLogin(data.user, data.token);
             navigate('/dashboard');
-        } catch (err) {
+        } catch {
             setError('Unable to reach the server. Please try again later.');
         }
     };

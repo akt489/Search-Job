@@ -54,7 +54,6 @@ function App() {
   // ─── Data State ──────────────────────────────────────────
   const [savedJobs, setSavedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [loadingData, setLoadingData] = useState(true);
 
   // ─── Theme State ─────────────────────────────────────────
   const [theme, setTheme] = useState(() => {
@@ -66,11 +65,8 @@ function App() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user || !token) {
-        setLoadingData(false);
         return;
       }
-
-      setLoadingData(true);
 
       try {
         // Fetch saved jobs
@@ -85,7 +81,13 @@ function App() {
           const savedData = await safeJson(savedResponse, []);
           setSavedJobs(Array.isArray(savedData) ? savedData.map((job) => job.id) : []);
         } else if (savedResponse.status === 401) {
-          handleLogout();
+          setUser(null);
+          setToken(null);
+          setSavedJobs([]);
+          setApplications([]);
+          window.localStorage.removeItem('jobscout-user');
+          window.localStorage.removeItem('jobscout-token');
+          navigate('/');
           return;
         }
 
@@ -103,13 +105,11 @@ function App() {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-      } finally {
-        setLoadingData(false);
       }
     };
 
     fetchUserData();
-  }, [user, token]);
+  }, [navigate, user, token]);
 
   // ─── Theme Effect ─────────────────────────────────────────
   useEffect(() => {

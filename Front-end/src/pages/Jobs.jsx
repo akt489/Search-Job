@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bookmark, ChevronDown, Filter, X } from 'lucide-react';
+import { Bookmark, Briefcase, ChevronDown, Filter, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import FilterPanel from '../components/FilterPanel';
@@ -29,6 +29,7 @@ function Jobs({ savedJobs, onToggleSave }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [referenceTime] = useState(() => Date.now());
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -48,7 +49,8 @@ function Jobs({ savedJobs, onToggleSave }) {
   };
 
   useEffect(() => {
-    fetchJobs();
+    const timer = window.setTimeout(fetchJobs, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const filteredJobs = useMemo(() => {
@@ -67,7 +69,7 @@ function Jobs({ savedJobs, onToggleSave }) {
       let matchesPosted = true;
       if (filters.postedWithin !== 'Any' && job.posted_at) {
         const postedAt = new Date(job.posted_at).getTime();
-        const daysAgo = Math.floor((Date.now() - postedAt) / (1000 * 60 * 60 * 24));
+        const daysAgo = Math.floor((referenceTime - postedAt) / (1000 * 60 * 60 * 24));
         const limit = filters.postedWithin === 'Last 24 hours' ? 1 : Number(filters.postedWithin.match(/\d+/)?.[0] || 365);
         matchesPosted = daysAgo <= limit;
       }
@@ -79,27 +81,13 @@ function Jobs({ savedJobs, onToggleSave }) {
       const second = new Date(b.posted_at || 0).getTime();
       return sortOrder === 'oldest' ? first - second : second - first;
     });
-  }, [filters, jobs, locationQuery, searchQuery, sortOrder]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, locationQuery, searchQuery, sortOrder]);
-
-  useEffect(() => {
-    if (!filteredJobs.length) {
-      setSelectedJobId(null);
-      return;
-    }
-    if (!filteredJobs.some((job) => String(job.id) === String(selectedJobId))) {
-      setSelectedJobId(filteredJobs[0].id);
-    }
-  }, [filteredJobs, selectedJobId]);
+  }, [filters, jobs, locationQuery, referenceTime, searchQuery, sortOrder]);
 
   const jobsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / jobsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const pageJobs = filteredJobs.slice((safeCurrentPage - 1) * jobsPerPage, safeCurrentPage * jobsPerPage);
-  const selectedJob = filteredJobs.find((job) => String(job.id) === String(selectedJobId)) || null;
+  const selectedJob = filteredJobs.find((job) => String(job.id) === String(selectedJobId)) || filteredJobs[0] || null;
   const activeFilters = [
     searchQuery.trim() && { key: 'search', label: searchQuery.trim(), remove: () => setSearchQuery('') },
     locationQuery.trim() && { key: 'location', label: locationQuery.trim(), remove: () => setLocationQuery('') },
@@ -120,6 +108,22 @@ function Jobs({ savedJobs, onToggleSave }) {
 
   const handleFilterChange = (event) => {
     setFilters((current) => ({ ...current, [event.target.name]: event.target.value }));
+    setCurrentPage(1);
+  };
+
+  const updateSearchQuery = (value) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const updateLocationQuery = (value) => {
+    setLocationQuery(value);
+    setCurrentPage(1);
+  };
+
+  const updateSortOrder = (value) => {
+    setSortOrder(value);
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -134,7 +138,7 @@ function Jobs({ savedJobs, onToggleSave }) {
     <div className="page-content page-jobs">
       <div className="page-title-block"><div><span className="field-kicker">SearchJob / jobs workspace</span><h1>Find open roles</h1><p>Search roles, companies, and skills. Compare the details that matter before you apply.</p></div><div className="page-title-meta"><strong>{filteredJobs.length || 'No'} open roles</strong><span>Updated from the latest job data</span></div></div>
 
-      <SearchBar value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} onSubmit={(event) => { event.preventDefault(); setCurrentPage(1); }} locationValue={locationQuery} onLocationChange={(event) => setLocationQuery(event.target.value)} sortValue={sortOrder} onSortChange={(event) => setSortOrder(event.target.value)} />
+      <SearchBar value={searchQuery} onChange={(event) => updateSearchQuery(event.target.value)} onSubmit={(event) => { event.preventDefault(); setCurrentPage(1); }} locationValue={locationQuery} onLocationChange={(event) => updateLocationQuery(event.target.value)} sortValue={sortOrder} onSortChange={(event) => updateSortOrder(event.target.value)} />
 
       <div className="active-filter-bar">
         <span className="active-filter-label">Active filters</span>
@@ -151,7 +155,7 @@ function Jobs({ savedJobs, onToggleSave }) {
       <div className="jobs-layout">
         <FilterPanel filters={filters} onChange={handleFilterChange} onApplyFilters={() => setCurrentPage(1)} onReset={resetFilters} />
         <section aria-label="Search results">
-          <div className="job-count-bar"><div><strong className="results-heading">Results for your search</strong><p>Roles are ordered by posted date</p></div><label className="results-sort"><span>Sort by</span><select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort results"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select><ChevronDown size={14} aria-hidden="true" /></label></div>
+          <div className="job-count-bar"><div><strong className="results-heading">Results for your search</strong><p>Roles are ordered by posted date</p></div><label className="results-sort"><span>Sort by</span><select value={sortOrder} onChange={(event) => updateSortOrder(event.target.value)} aria-label="Sort results"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select><ChevronDown size={14} aria-hidden="true" /></label></div>
           {pageJobs.length > 0 ? <JobList jobs={pageJobs} savedJobs={savedJobs} onToggleSave={onToggleSave} compact selectedJobId={selectedJobId} onSelect={(job) => setSelectedJobId(job.id)} /> : <EmptyState title="No jobs found" message="Try adjusting your filters or search terms." action={resetFilters} actionLabel="Clear filters" />}
           <Pagination currentPage={safeCurrentPage} totalPages={totalPages} onChange={setCurrentPage} />
         </section>

@@ -47,7 +47,7 @@ function Register({ onRegister }) {
 
             onRegister(data.user, data.token);
             navigate('/dashboard');
-        } catch (err) {
+        } catch {
             setErrors({ form: 'Unable to reach the server. Please try again later.' });
         }
     };

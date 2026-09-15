@@ -18,9 +18,6 @@ import {
     BarChart3,
     ChevronRight,
     Send,
-    Rocket,
-    Zap,
-    Award,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";

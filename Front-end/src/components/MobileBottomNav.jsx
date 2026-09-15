@@ -1,4 +1,4 @@
-import { Bookmark, BriefcaseBusiness, LayoutDashboard, ListChecks, MoreHorizontal, UserRound } from 'lucide-react';
+import { Bookmark, BriefcaseBusiness, ListChecks, MoreHorizontal, UserRound } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 

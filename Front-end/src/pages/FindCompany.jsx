@@ -63,7 +63,10 @@ function FindCompany() {
         }
     }, [searchQuery, locationFilter]);
 
-    useEffect(() => { fetchCompanies(); }, [fetchCompanies]);
+    useEffect(() => {
+        const timer = window.setTimeout(fetchCompanies, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchCompanies]);
 
     // Debounce search
     useEffect(() => {
