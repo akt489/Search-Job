@@ -1,272 +1,51 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  MapPin,
-  CalendarDays,
-  BriefcaseBusiness,
-  GraduationCap,
-  Building2,
-  CheckCircle2,
-  Mail,
-  Send,
-  Bookmark,
-  BookmarkCheck,
-  Share2,
-  ArrowLeft,
-  Sparkles,
-  Clock,
-  DollarSign,
-  Users,
-  ExternalLink,
-  ChevronRight,
-} from "lucide-react";
+import { useState } from 'react';
+import { ArrowLeft, Bookmark, BookmarkCheck, BriefcaseBusiness, CalendarDays, CheckCircle2, Clock3, ExternalLink, Globe2, GraduationCap, Mail, MapPin, Send, Share2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getDeadlineLabel, getEmploymentType, getJobTags, getPostedLabel, getSalaryLabel, getWorkMode, getCompanyInitials } from '../utils/jobFormatters';
 
-function JobDetailPremium({ job, saved, onToggleSave }) {
-  const [savedJobs, setSavedJobs] = useState([]);
+function JobDetails({ job, saved, onToggleSave }) {
+  const [shareLabel, setShareLabel] = useState('Share');
+  if (!job) return null;
 
-  if (!job) {
-    return (
-      <div className="empty-state">
-        <div className="empty-state-icon"><BriefcaseBusiness size={32} /></div>
-        <h2>Job not found</h2>
-        <p>The job you're looking for may have been removed.</p>
-        <Link to="/jobs" className="button button-primary">Browse Jobs</Link>
-      </div>
-    );
-  }
+  const responsibilities = Array.isArray(job.responsibilities) ? job.responsibilities : [];
+  const requirements = Array.isArray(job.requirements) ? job.requirements : [];
+  const tags = getJobTags(job);
 
-  // ─── Mock "More Jobs" data ──────────────────────────────
-  const moreJobs = [
-    {
-      id: 2,
-      title: "DevOps & Telecloud Infrastructure Engineer",
-      location: "Hybrid",
-      posted: "September 29th, 2026",
-    },
-    {
-      id: 3,
-      title: "Customer Service Specialist",
-      location: "Office",
-      posted: "September 4th, 2026",
-    },
-    {
-      id: 4,
-      title: "B2B Sales & Business Development Executive",
-      location: "Office",
-      posted: "September 4th, 2026",
-    },
-  ];
-
-  // ─── Mock "Similar Jobs" chips ──────────────────────────
-  const similarTags = [
-    "Jobs in IT, Computer Science and Software Engineering",
-    "Jobs for Junior Level (1-3 years)",
-    "Jobs in Addis Ababa",
-  ];
-
-  // ─── Share handler ──────────────────────────────────────
   const handleShare = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: job.title,
-          text: `Check out this job: ${job.title} at ${job.company}`,
-          url: window.location.href,
-        });
-      } else {
+      if (navigator.share) await navigator.share({ title: job.title, text: `Check out ${job.title} at ${job.company}`, url: window.location.href });
+      else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("Job link copied to clipboard!");
+        setShareLabel('Link copied');
+        window.setTimeout(() => setShareLabel('Share'), 2500);
       }
-    } catch (error) {
-      console.error("Share failed:", error);
+    } catch {
+      setShareLabel('Share');
     }
   };
-
-  // ─── Toggle save ────────────────────────────────────────
-  const handleToggleSave = (jobId) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(savedJobs.filter(id => id !== jobId));
-    } else {
-      setSavedJobs([...savedJobs, jobId]);
-    }
-  };
-
-  // ─── Mock responsibilities ─────────────────────────────
-  const responsibilities = [
-    "Lead product strategy with cross-functional teams",
-    "Develop and execute marketing campaigns",
-    "Build scalable full-stack applications",
-    "Drive B2B sales growth",
-    "Craft intuitive user experiences",
-  ];
-
-  // ─── Mock requirements ──────────────────────────────────
-  const requirements = [
-    "Bachelor's degree in Computer Science or related field",
-    "Minimum 2 years of professional experience",
-    "Experience in B2B technology sales",
-    "Strong communication and negotiation skills",
-    "Willingness to contact and visit business clients",
-  ];
 
   return (
     <div className="job-detail-premium">
-      {/* ─── Top Navigation ────────────────────────────────── */}
-      <div className="job-detail-topbar">
-        <Link to="/jobs" className="back-to-jobs">
-          <ArrowLeft size={18} /> Back to Jobs
-        </Link>
-        <button className="share-job-button" onClick={handleShare}>
-          <Share2 size={18} /> Share
-        </button>
-      </div>
-
-      {/* ─── Main Layout ──────────────────────────────────── */}
+      <div className="job-detail-topbar"><Link to="/jobs" className="back-to-jobs"><ArrowLeft size={16} /> Back to jobs</Link><button type="button" className="share-job-button" onClick={handleShare}><Share2 size={16} /> {shareLabel}</button></div>
       <div className="job-detail-premium-layout">
-        {/* ─── Left Column ────────────────────────────────── */}
-        <div className="job-detail-body-left">
-          {/* ─── Hero Card ────────────────────────────────── */}
-          <div className="job-detail-hero glass-card">
-            <div className="job-hero-content">
-              <div className="job-company-avatar">
-                <Building2 size={32} />
-              </div>
-              <div className="job-hero-info">
-                <div className="job-category-badge">{job.category || "Technology"}</div>
-                <h1>{job.title || "Technical B2B Sales & Implementation Specialist"}</h1>
-                <div className="job-company-name">
-                  <Building2 size={17} /> {job.company || "Ledger Technology PLC"}
-                </div>
-                <div className="job-meta-grid">
-                  <div className="job-meta-item">
-                    <MapPin size={17} /> <span>{job.location || "Addis Ababa"}</span>
-                  </div>
-                  <div className="job-meta-item">
-                    <BriefcaseBusiness size={17} /> <span>{job.type || "Full-time"}</span>
-                  </div>
-                  <div className="job-meta-item">
-                    <GraduationCap size={17} /> <span>Mid Level</span>
-                  </div>
-                  <div className="job-meta-item">
-                    <Clock size={17} /> <span>Posted 2 days ago</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <main className="job-detail-body-left">
+          <section className="job-detail-hero">
+            <div className="job-hero-content"><div className="job-company-avatar" aria-hidden="true">{getCompanyInitials(job.company)}</div><div className="job-hero-info"><span className="job-category-badge">{job.category || 'Open role'}</span><h1>{job.title}</h1><p className="job-company-name">{job.company || 'Company not listed'}</p><div className="job-meta-grid"><span className="job-meta-item"><MapPin size={14} /> {job.location || 'Location flexible'}</span><span className="job-meta-item"><BriefcaseBusiness size={14} /> {getEmploymentType(job)}</span><span className="job-meta-item"><Globe2 size={14} /> {getWorkMode(job)}</span><span className="job-meta-item"><Clock3 size={14} /> Posted {getPostedLabel(job)}</span></div></div></div>
+          </section>
 
-          {/* ─── About the Job ────────────────────────────── */}
-          <div className="job-detail-description glass-card">
-            <div className="job-detail-description-title">
-              <BriefcaseBusiness size={20} /> About the Job
-            </div>
-            <div className="job-detail-description-details">
-              <p>
-                Ledger Technology PLC is looking for a technically qualified B2B Sales & Implementation Specialist
-                to support client acquisition, product demonstrations, onboarding, and technical implementation.
-              </p>
-            </div>
-          </div>
+          <section className="job-detail-description"><h2 className="job-detail-description-title"><BriefcaseBusiness size={17} /> Role overview</h2><div className="job-detail-description-details"><p>{job.description || 'This role does not include a description yet. Review the decision facts and contact the company for more information.'}</p></div></section>
 
-          {/* ─── Requirements ──────────────────────────────── */}
-          <div className="job-detail-description glass-card">
-            <div className="job-detail-description-title">
-              <CheckCircle2 size={20} /> Requirements
-            </div>
-            <div className="job-detail-description-details">
-              <ul className="requirements-list-premium">
-                {requirements.map((req, i) => (
-                  <li key={i}><CheckCircle2 size={18} className="list-check" /> {req}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          {responsibilities.length > 0 && <section className="job-detail-description"><h2 className="job-detail-description-title"><CheckCircle2 size={17} /> Responsibilities</h2><div className="job-detail-description-details"><ul className="requirements-list-premium">{responsibilities.map((item) => <li key={item}><CheckCircle2 size={16} className="list-check" />{item}</li>)}</ul></div></section>}
+          {requirements.length > 0 && <section className="job-detail-description"><h2 className="job-detail-description-title"><GraduationCap size={17} /> Requirements</h2><div className="job-detail-description-details"><ul className="requirements-list-premium">{requirements.map((item) => <li key={item}><CheckCircle2 size={16} className="list-check" />{item}</li>)}</ul></div></section>}
+          {tags.length > 0 && <section className="job-detail-description"><h2 className="job-detail-description-title"><GraduationCap size={17} /> Skills and tags</h2><div className="skill-tags-premium">{tags.map((tag) => <span key={tag} className="skill-tag">{tag}</span>)}</div></section>}
+          <section className="job-detail-description" id="how-to-apply-section"><h2 className="job-detail-description-title"><Mail size={17} /> Application information</h2><div className="job-detail-description-details"><p>Use the application flow to submit your details and CV for this role.</p>{job.contactEmail && <a href={`mailto:${job.contactEmail}`} className="apply-email-link"><Mail size={15} /> {job.contactEmail}</a>}</div></section>
+        </main>
 
-          {/* ─── Requirement Skills ────────────────────────── */}
-          <div className="job-detail-description glass-card">
-            <div className="job-detail-description-title">
-              <GraduationCap size={20} /> Requirement Skill
-            </div>
-            <div className="job-detail-description-details">
-              <div className="skill-tags-premium">
-                <span className="skill-tag">IT and software development</span>
-                <span className="skill-tag">B2B Sales</span>
-                <span className="skill-tag">SaaS Implementation</span>
-                <span className="skill-tag">Technical Support</span>
-                <span className="skill-tag">CRM Management</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── How to Apply ──────────────────────────────── */}
-          <div className="job-detail-description glass-card" id="how-to-apply-section">
-            <div className="job-detail-description-title">
-              <Mail size={20} /> How To Apply
-            </div>
-            <div className="job-detail-description-details">
-              <p>
-                Please send your CV, degree certificate, and evidence of relevant work experience to:
-              </p>
-              <a href="mailto:info@ledger.et" className="apply-email-link">
-                <Mail size={18} /> info@ledger.et
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── Right Column ───────────────────────────────── */}
-        <div className="job-detail-right-side">
-          {/* ─── More Jobs ──────────────────────────────────── */}
-          <div className="job-detail-more-jobs-container glass-card">
-            <div className="job-detail-more-jobs-header">
-              <BriefcaseBusiness size={20} />
-              <h3>More Jobs by {job.company || "Ledger Ethiopia"}</h3>
-            </div>
-
-            {moreJobs.map((moreJob) => (
-              <div key={moreJob.id} className="job-detail-more-jobs-item">
-                <div className="more-job-top">
-                  <Link to={`/jobs/${moreJob.id}`} className="more-job-title">
-                    {moreJob.title}
-                  </Link>
-                  <button
-                    className={`save-job-icon ${savedJobs.includes(moreJob.id) ? "saved" : ""}`}
-                    onClick={() => handleToggleSave(moreJob.id)}
-                  >
-                    {savedJobs.includes(moreJob.id) ? (
-                      <BookmarkCheck size={20} />
-                    ) : (
-                      <Bookmark size={20} />
-                    )}
-                  </button>
-                </div>
-                <div className="more-job-meta">
-                  <span><MapPin size={14} /> {moreJob.location}</span>
-                  <span><CalendarDays size={14} /> {moreJob.posted}</span>
-                </div>
-                <div className="job-detail-horizontal-line" />
-              </div>
-            ))}
-          </div>
-
-          {/* ─── Similar Jobs ──────────────────────────────── */}
-          <div className="job-detail-similar-jobs-container glass-card">
-            <div className="job-detail-similar-jobs-header">
-              <Sparkles size={20} />
-              <h3>Search Similar Jobs in {job.title}</h3>
-            </div>
-            <div className="similar-tags-container">
-              {similarTags.map((tag, i) => (
-                <Link key={i} to={`/jobs?search=${encodeURIComponent(tag)}`} className="similar-tag">
-                  <ChevronRight size={16} /> {tag}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+        <aside className="job-detail-right-side" aria-label="Job decision facts"><section className="job-summary-panel"><div className="job-summary-heading"><span className="field-kicker">Decision facts</span><h2>Review before you apply</h2></div><div className="job-summary-actions"><Link to={`/apply/${job.id}`} className="button button-primary button-full"><Send size={16} /> Apply</Link><button type="button" className={saved ? 'button button-secondary button-full is-saved' : 'button button-secondary button-full'} onClick={() => onToggleSave(job.id)}>{saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}{saved ? 'Saved' : 'Save role'}</button></div><dl className="detail-facts-list"><div><dt><MapPin size={14} /> Location</dt><dd>{job.location || 'Location flexible'}</dd></div><div><dt><Globe2 size={14} /> Work mode</dt><dd>{getWorkMode(job)}</dd></div><div><dt><BriefcaseBusiness size={14} /> Employment type</dt><dd>{getEmploymentType(job)}</dd></div><div><dt>Salary</dt><dd>{getSalaryLabel(job)}</dd></div><div><dt><CalendarDays size={14} /> Deadline</dt><dd>{getDeadlineLabel(job)}</dd></div></dl><div className="decision-note"><CheckCircle2 size={16} /><div><strong>Compare the details</strong><p>Use the role overview, requirements, and profile fit to decide whether this is the right next step.</p></div></div></section><section className="job-summary-panel company-context"><span className="field-kicker">Company context</span><h2>{job.company || 'Company not listed'}</h2><p>Review the company information available with this role and use the jobs directory to compare other opportunities.</p><Link to="/companies" className="job-context-link">Explore companies <ExternalLink size={14} /></Link></section></aside>
       </div>
+      <Link to={`/apply/${job.id}`} className="mobile-sticky-apply"><Send size={16} /> Apply to this role</Link>
     </div>
   );
 }
 
-export default JobDetailPremium;
+export default JobDetails;

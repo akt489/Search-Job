@@ -1,97 +1,56 @@
-import { useState, useEffect, useRef } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';  // ✅ No type assertion
+import { useEffect, useRef, useState } from 'react';
+import { Bot, LockKeyhole, Send, X } from 'lucide-react';
+import { API_BASE, safeJson } from '../utils/api';
 
 function AIChat({ jobId, onClose }) {
-    const [messages, setMessages] = useState([
-        { role: 'ai', content: '👋 Hi! I\'m JobScout AI. How can I help you with your job search today?' }
-    ]);
-    const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const chatEndRef = useRef(null);
-    const token = localStorage.getItem('jobscout-token');
+  const [messages, setMessages] = useState([{ role: 'ai', content: 'I can help you find roles, explain a match, or improve your profile.' }]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const token = localStorage.getItem('jobscout-token');
 
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    inputRef.current?.focus();
+  }, [messages]);
 
-    const handleSend = async () => {
-        if (!input.trim() || loading) return;
+  useEffect(() => {
+    const handleKeyDown = (event) => event.key === 'Escape' && onClose?.();
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
-        const userMessage = input.trim();
-        setInput('');
-        setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-        setLoading(true);
+  const handleSend = async () => {
+    const userMessage = input.trim();
+    if (!userMessage || loading) return;
+    setInput('');
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setLoading(true);
 
-        try {
-            const response = await fetch(`${API_BASE}/ai/chat`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: userMessage,
-                    jobId: jobId || null,
-                }),
-            });
+    try {
+      const response = await fetch(`${API_BASE}/ai/chat`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: userMessage, jobId: jobId || null }) });
+      const data = await safeJson(response, {});
+      setMessages((prev) => [...prev, { role: 'ai', content: response.ok ? (data.response || 'I could not find an answer for that yet.') : 'I am having trouble connecting right now. Please try again.' }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'ai', content: 'The connection failed. Please check your network and try again.' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            const data = await response.json();
-
-            if (response.ok) {
-                setMessages(prev => [...prev, { role: 'ai', content: data.response }]);
-            } else {
-                setMessages(prev => [...prev, {
-                    role: 'ai',
-                    content: '❌ Sorry, I\'m having trouble connecting. Please try again.'
-                }]);
-            }
-        } catch (error) {
-            setMessages(prev => [...prev, {
-                role: 'ai',
-                content: '❌ Network error. Please check your connection.'
-            }]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="ai-chat-container">
-            <div className="ai-chat-header">
-                <h3>🤖 JobScout AI</h3>
-                <button className="close-btn" onClick={onClose}>✕</button>
-            </div>
-
-            <div className="ai-chat-messages">
-                {messages.map((msg, idx) => (
-                    <div key={idx} className={`ai-message ${msg.role}`}>
-                        <div className="message-content">{msg.content}</div>
-                    </div>
-                ))}
-                {loading && (
-                    <div className="ai-message ai typing">
-                        <div className="typing-dots">...</div>
-                    </div>
-                )}
-                <div ref={chatEndRef} />
-            </div>
-
-            <div className="ai-chat-input">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Ask me about jobs, applications, or careers..."
-                    disabled={loading}
-                />
-                <button onClick={handleSend} disabled={loading}>
-                    {loading ? '...' : '➤'}
-                </button>
-            </div>
-        </div>
-    );
+  return (
+    <section className="ai-chat-container" role="dialog" aria-modal="false" aria-labelledby="career-assistant-title">
+      <header className="ai-chat-header"><div><span className="ai-chat-kicker">Career assistant</span><h2 id="career-assistant-title"><Bot size={17} aria-hidden="true" /> SearchJob assistant</h2></div><button type="button" className="icon-button icon-button-on-dark" onClick={onClose} aria-label="Close Career assistant"><X size={18} /></button></header>
+      <div className="ai-chat-messages" aria-live="polite">
+        {messages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role}`}><span className="sr-only">{message.role === 'user' ? 'You said' : 'Assistant said'}</span><div className="message-content">{message.content}</div></div>)}
+        {loading && <div className="ai-message ai typing"><div className="typing-dots" aria-label="Assistant is typing">•••</div></div>}
+        <div ref={chatEndRef} />
+      </div>
+      <form className="ai-chat-input" onSubmit={(event) => { event.preventDefault(); handleSend(); }}><label htmlFor="assistant-message" className="sr-only">Message Career assistant</label><input ref={inputRef} id="assistant-message" type="text" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask about jobs or your profile" disabled={loading} /><button type="submit" disabled={loading || !input.trim()} aria-label="Send message"><Send size={17} /></button></form>
+      <div className="ai-chat-foot"><LockKeyhole size={13} aria-hidden="true" /> Private to your SearchJob account</div>
+    </section>
+  );
 }
 
 export default AIChat;

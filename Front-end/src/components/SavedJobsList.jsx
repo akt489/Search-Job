@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { BookmarkCheck, BriefcaseBusiness, MapPin } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 function SavedJobsList({ jobs = [], onToggleSave }) {
@@ -16,11 +17,8 @@ function SavedJobsList({ jobs = [], onToggleSave }) {
     <div className="saved-jobs-grid" aria-label="Saved Job Listings">
       {jobsList.map((job) => (
         <article key={job.id} className="saved-job-card">
-          <div>
-            <h3>{job.title || 'Untitled Role'}</h3>
-            <p style={{ color: 'var(--accent)', fontWeight: 600 }}>{job.company || 'Unknown Company'}</p>
-            <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>📍 {job.location || 'Remote'}</p>
-          </div>
+          <div className="saved-job-heading"><span className="company-mark" aria-hidden="true"><BookmarkCheck size={16} /></span><div><h3>{job.title || 'Untitled role'}</h3><p className="saved-job-company">{job.company || 'Company not listed'}</p></div></div>
+          <div className="saved-job-meta"><span><MapPin size={14} /> {job.location || 'Location flexible'}</span><span><BriefcaseBusiness size={14} /> {job.employmentType || job.type || 'Full-time'}</span></div>
           <div className="saved-actions">
             <Link to={`/jobs/${job.id}`} className="button button-secondary small-button">
               View

@@ -1,18 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import {
-  Bookmark,
-  MapPin,
-  BriefcaseBusiness,
-  Clock,
-  GraduationCap,
-  Globe2,
-  Banknote,
-  CalendarDays,
-  ArrowUpRight,
-  Sparkles,
-  Building2,
-} from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, Banknote, Bookmark, BookmarkCheck, BriefcaseBusiness, Building2, CalendarDays, Clock3, Globe2, GraduationCap, MapPin } from 'lucide-react';
+import { getCompanyInitials, getDeadlineLabel, getEmploymentType, getJobTags, getPostedLabel, getSalaryLabel, getWorkMode } from '../utils/jobFormatters';
 
 export type JobType = {
   id: string | number;
@@ -36,349 +25,80 @@ export type JobType = {
   [key: string]: any;
 };
 
-export type JobCardProps = {
+type JobCardProps = {
   job: JobType;
   saved: boolean;
   onToggleSave: (jobId: string | number) => void;
+  compact?: boolean;
+  selected?: boolean;
+  onSelect?: (job: JobType) => void;
 };
 
-const JobCard: React.FC<JobCardProps> = ({
-  job,
-  saved,
-  onToggleSave,
-}) => {
-  /* ===============================
-     JOB DATA NORMALIZATION
-  =============================== */
+function JobCard({ job, saved, onToggleSave, compact = false, selected = false, onSelect }: JobCardProps) {
+  const tags = getJobTags(job);
+  const employmentType = getEmploymentType(job);
+  const workMode = getWorkMode(job);
+  const description = job.description || 'Review the role details to learn more about this opportunity.';
 
-  const descriptionText = job.description || "";
+  if (compact) {
+    const handleSelect = () => onSelect?.(job);
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+      if ((event.key === 'Enter' || event.key === ' ') && onSelect) {
+        event.preventDefault();
+        handleSelect();
+      }
+    };
 
-  const preview =
-    descriptionText.length > 150
-      ? `${descriptionText.slice(0, 150)}...`
-      : descriptionText;
-
-  const postedDate =
-    job.posted ||
-    (job.posted_at
-      ? new Date(job.posted_at).toLocaleDateString()
-      : "Recently");
-
-  const employmentType =
-    job.employmentType ||
-    job.type ||
-    "Full-time";
-
-  const careerLevel =
-    job.careerLevel ||
-    "Not specified";
-
-  const workMode =
-    job.workMode ||
-    (job.remote
-      ? "Remote"
-      : "On-site");
-
-  const salaryText =
-    job.salary ||
-    "Salary not disclosed";
-
-  const deadlineText =
-    job.deadline ||
-    "Open until filled";
-
-  const matchScore =
-    job.matchScore ||
-    job.match_score ||
-    null;
-
-  const tags = Array.isArray(job.tags)
-    ? job.tags.slice(0, 4)
-    : job.category
-      ? [job.category]
-      : [];
-
-  /* ===============================
-     COMPANY INITIALS
-  =============================== */
-
-  const companyInitials =
-    job.company
-      ?.split(" ")
-      .slice(0, 2)
-      .map((word: string) =>
-        word.charAt(0)
-      )
-      .join("")
-      .toUpperCase() || "CO";
-
-  /* ===============================
-     MATCH SCORE COLOR
-  =============================== */
-
-  const getMatchClass = () => {
-    if (!matchScore) return "";
-
-    if (matchScore >= 85)
-      return "excellent";
-
-    if (matchScore >= 70)
-      return "good";
-
-    return "fair";
-  };
+    return (
+      <article className={selected ? 'job-row is-selected' : 'job-row'} onClick={(event) => { if (!(event.target as HTMLElement).closest('a,button')) handleSelect(); }} onKeyDown={handleKeyDown} tabIndex={onSelect ? 0 : undefined} aria-current={selected ? 'true' : undefined} aria-labelledby={`job-title-${job.id}`}>
+        <span className="company-mark" aria-hidden="true">{getCompanyInitials(job.company)}</span>
+        <div className="job-row-main">
+          <Link to={`/jobs/${job.id}`} className="job-title-link" id={`job-title-${job.id}`}>{job.title}</Link>
+          <p className="job-company-name">{job.company || 'Company not listed'}</p>
+          <div className="job-row-facts">
+            <span><MapPin size={12} aria-hidden="true" /> {job.location || 'Location flexible'}</span>
+            <span><Globe2 size={12} aria-hidden="true" /> {workMode}</span>
+            <span><BriefcaseBusiness size={12} aria-hidden="true" /> {employmentType}</span>
+          </div>
+        </div>
+        <div className="job-row-side">
+          <span className="mono-label">{getPostedLabel(job)}</span>
+          <button type="button" className={saved ? 'job-save-btn is-saved' : 'job-save-btn'} onClick={(event) => { event.stopPropagation(); onToggleSave(job.id); }} aria-label={saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`} title={saved ? 'Remove from saved jobs' : 'Save job'}>
+            {saved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+          </button>
+        </div>
+      </article>
+    );
+  }
 
   return (
-    <article
-      className="job-card-modern"
-      aria-labelledby={`job-title-${job.id}`}
-    >
-      {/* ===============================
-          TOP SECTION
-      =============================== */}
-
+    <article className="job-card-modern" aria-labelledby={`job-card-title-${job.id}`}>
       <div className="job-card-header">
-
-        {/* COMPANY LOGO */}
-
-        <div className="job-company-logo">
-          {job.companyLogo ? (
-            <img
-              src={job.companyLogo}
-              alt={`${job.company} logo`}
-            />
-          ) : (
-            <span>
-              {companyInitials}
-            </span>
-          )}
-        </div>
-
-
-        {/* SAVE BUTTON */}
-
-        <button
-          type="button"
-          className={
-            saved
-              ? "job-save-btn is-saved"
-              : "job-save-btn"
-          }
-          onClick={() =>
-            onToggleSave(job.id)
-          }
-          aria-label={
-            saved
-              ? `Remove ${job.title} from saved jobs`
-              : `Save ${job.title}`
-          }
-          title={
-            saved
-              ? "Remove from saved jobs"
-              : "Save job"
-          }
-        >
-          <Bookmark size={19} />
+        <span className="company-mark company-mark-large" aria-hidden="true">{getCompanyInitials(job.company)}</span>
+        <button type="button" className={saved ? 'job-save-btn is-saved' : 'job-save-btn'} onClick={() => onToggleSave(job.id)} aria-label={saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`} title={saved ? 'Remove from saved jobs' : 'Save job'}>
+          {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
         </button>
-
       </div>
-
-
-      {/* ===============================
-          JOB TITLE
-      =============================== */}
-
       <div className="job-title-section">
-
-        <Link
-          to={`/jobs/${job.id}`}
-          className="job-title-link"
-        >
-          <h3
-            id={`job-title-${job.id}`}
-          >
-            {job.title}
-          </h3>
-        </Link>
-
-
-        <div className="job-company-name">
-
-          <Building2 size={15} />
-
-          <span>
-            {job.company}
-          </span>
-
-        </div>
-
+        <Link to={`/jobs/${job.id}`} className="job-title-link"><h3 id={`job-card-title-${job.id}`}>{job.title}</h3></Link>
+        <p className="job-company-name"><Building2 size={14} aria-hidden="true" /> {job.company || 'Company not listed'}</p>
       </div>
-
-
-      {/* ===============================
-          AI MATCH SCORE
-      =============================== */}
-
-      {matchScore && (
-        <div className="job-ai-match">
-
-          <div className="ai-match-left">
-
-            <div className="ai-match-icon">
-              <Sparkles size={15} />
-            </div>
-
-            <div>
-              <span>
-                AI Match
-              </span>
-
-              <strong>
-                {matchScore}% Match
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div
-            className={`match-circle ${getMatchClass()}`}
-          >
-            {matchScore}%
-          </div>
-
-        </div>
-      )}
-
-
-      {/* ===============================
-          JOB META
-      =============================== */}
-
+      {job.matchScore && <div className="job-match-note"><span>Profile match</span><strong>{job.matchScore}%</strong></div>}
       <div className="job-meta-modern">
-
-        <span>
-          <MapPin size={15} />
-
-          {job.location || "Location flexible"}
-        </span>
-
-        <span>
-          <BriefcaseBusiness size={15} />
-
-          {employmentType}
-        </span>
-
-        <span>
-          <Globe2 size={15} />
-
-          {workMode}
-        </span>
-
-        {careerLevel !== "Not specified" && (
-          <span>
-            <GraduationCap size={15} />
-
-            {careerLevel}
-          </span>
-        )}
-
+        <span><MapPin size={14} aria-hidden="true" /> {job.location || 'Location flexible'}</span>
+        <span><BriefcaseBusiness size={14} aria-hidden="true" /> {employmentType}</span>
+        <span><Globe2 size={14} aria-hidden="true" /> {workMode}</span>
+        {job.careerLevel && <span><GraduationCap size={14} aria-hidden="true" /> {job.careerLevel}</span>}
       </div>
-
-
-      {/* ===============================
-          DESCRIPTION
-      =============================== */}
-
-      {preview && (
-        <p className="job-description-modern">
-          {preview}
-        </p>
-      )}
-
-
-      {/* ===============================
-          SKILL TAGS
-      =============================== */}
-
-      {tags.length > 0 && (
-
-        <div className="job-tags-modern">
-
-          {tags.map(
-            (tag: string, index: number) => (
-
-              <span
-                key={`${job.id}-${tag}-${index}`}
-              >
-                {tag}
-              </span>
-
-            )
-          )}
-
-        </div>
-
-      )}
-
-
-      {/* ===============================
-          FOOTER
-      =============================== */}
-
+      <p className="job-description-modern">{description}</p>
+      {tags.length > 0 && <div className="job-tags-modern">{tags.map((tag) => <span key={`${job.id}-${tag}`}>{tag}</span>)}</div>}
       <div className="job-card-bottom">
-
-        <div className="job-extra-info">
-
-          <div>
-            <Banknote size={15} />
-
-            <span>
-              {salaryText}
-            </span>
-          </div>
-
-          <div>
-            <CalendarDays size={15} />
-
-            <span>
-              {deadlineText}
-            </span>
-          </div>
-
-        </div>
-
-
-        <div className="job-card-actions">
-
-          <Link
-            to={`/jobs/${job.id}`}
-            className="job-details-btn"
-          >
-            View Job
-
-            <ArrowUpRight size={17} />
-          </Link>
-
-        </div>
-
+        <div className="job-extra-info"><span><Banknote size={14} aria-hidden="true" /> {getSalaryLabel(job)}</span><span><CalendarDays size={14} aria-hidden="true" /> {getDeadlineLabel(job)}</span></div>
+        <Link to={`/jobs/${job.id}`} className="job-details-btn">View job <ArrowUpRight size={15} aria-hidden="true" /></Link>
       </div>
-
-
-      {/* POSTED INDICATOR */}
-
-      <div className="job-posted-info">
-
-        <Clock size={13} />
-
-        <span>
-          Posted {postedDate}
-        </span>
-
-      </div>
-
+      <div className="job-posted-info"><Clock3 size={13} aria-hidden="true" /> Posted {getPostedLabel(job)}</div>
     </article>
   );
-};
+}
 
 export default JobCard;

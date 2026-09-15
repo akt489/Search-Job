@@ -1,7 +1,10 @@
 import { FormEvent, useMemo, useState, ChangeEvent, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowUpRight, BriefcaseBusiness, RefreshCw } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import JobList from '../components/JobList';
+import { EmptyState, ErrorState, LoadingState } from '../components/ui/AsyncState';
+import { API_BASE, safeJson } from '../utils/api';
 
 // --- Define the Job type ---
 type Job = {
@@ -17,8 +20,6 @@ type Job = {
     posted_at: string;
 };
 
-// --- Vite environment variable type fix ---
-const API_BASE = (import.meta as any).env.VITE_API_URL || '';
 
 type HomeProps = {
     savedJobs: string[];
@@ -31,23 +32,24 @@ function Home({ savedJobs, onToggleSave }: HomeProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Fetch all jobs from the API
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const response = await fetch(`${API_BASE}/jobs`);
-                if (!response.ok) throw new Error('Failed to load jobs');
-                const data = await response.json();
-                setAllJobs(Array.isArray(data) ? data : []);
-            } catch (err) {
-                setError('Unable to load jobs. Please try again later.');
-                console.error('Jobs fetch error:', err);
-                setAllJobs([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchJobs = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const response = await fetch(`${API_BASE}/jobs`);
+            const data = await safeJson(response, []);
+            if (!response.ok) throw new Error(data?.error || 'Failed to load jobs');
+            setAllJobs(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setError('Unable to load jobs. Please try again.');
+            console.error('Jobs fetch error:', err);
+            setAllJobs([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchJobs();
     }, []);
 
@@ -71,82 +73,22 @@ function Home({ savedJobs, onToggleSave }: HomeProps) {
     const recentJobs = safeAllJobs.slice(3, 8);
 
     if (loading) {
-        return (
-            <div className="page-content page-home">
-                <section className="hero-section">
-                    <div className="hero-copy">
-                        <p className="eyebrow">Find your next career move</p>
-                        <h1>Modern job search for ambitious professionals.</h1>
-                        <p className="hero-text">Loading jobs...</p>
-                    </div>
-                </section>
-            </div>
-        );
+        return <div className="page-content page-home"><div className="page-title-block"><div><span className="field-kicker">SearchJob / starting point</span><h1>Find your next opportunity</h1><p>Search roles, companies, and skills without losing the details that matter.</p></div></div><LoadingState label="Loading jobs" /></div>;
     }
 
     if (error) {
-        return (
-            <div className="page-content page-home">
-                <section className="hero-section">
-                    <div className="hero-copy">
-                        <p className="eyebrow">Find your next career move</p>
-                        <h1>Modern job search for ambitious professionals.</h1>
-                        <p className="hero-text" style={{ color: 'red' }}>{error}</p>
-                    </div>
-                </section>
-            </div>
-        );
+        return <div className="page-content page-home"><div className="page-title-block"><div><span className="field-kicker">SearchJob / starting point</span><h1>Find your next opportunity</h1><p>Search roles, companies, and skills without losing the details that matter.</p></div></div><ErrorState title="Jobs are temporarily unavailable" message={error} onRetry={fetchJobs} /><div className="home-feature-card"><div><h2>Keep your search moving</h2><p>Browse the current jobs workspace or return when the latest job data is available.</p></div><Link to="/jobs" className="button button-secondary">Browse jobs <ArrowUpRight size={15} /></Link></div></div>;
     }
 
     return (
         <div className="page-content page-home">
-            <section className="hero-section">
-                <div className="hero-copy">
-                    <p className="eyebrow">Find your next career move</p>
-                    <h1>Modern job search for ambitious professionals.</h1>
-                    <p className="hero-text">
-                        Browse curated roles, save favorites, and apply with confidence through a clean, modern dashboard.
-                    </p>
-                    <SearchBar
-                        value={searchText}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
-                        onSubmit={(event: FormEvent<HTMLFormElement>) => event.preventDefault()}
-                        placeholder="Search by title, company, or keyword"
-                    />
-                    <div className="hero-links">
-                        <Link to="/jobs" className="button button-primary">
-                            Browse Jobs
-                        </Link>
-                        <Link to="/dashboard" className="button button-secondary">
-                            Go to Dashboard
-                        </Link>
-                    </div>
-                </div>
-                <div className="hero-visual">
-                    <div className="hero-card">
-                        {featuredJobs.length > 0 ? (
-                            <>
-                                <h2>Featured role</h2>
-                                <p>{featuredJobs[0].title} at {featuredJobs[0].company}</p>
-                                <span>{featuredJobs[0].location}</span>
-                            </>
-                        ) : (
-                            <>
-                                <h2>Featured role</h2>
-                                <p>Senior Frontend Engineer at BrightHire Labs</p>
-                                <span>Hybrid • New York, NY</span>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </section>
+            <div className="page-title-block"><div><span className="field-kicker">SearchJob / starting point</span><h1>Find your next opportunity</h1><p>Search roles, companies, and skills. Compare the details that matter before you apply.</p></div><div className="page-title-meta"><strong>{safeAllJobs.length || 'No'} open roles</strong><span>Updated from the latest job data</span></div></div>
+            <SearchBar value={searchText} onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)} onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); }} placeholder="Search roles, companies, or skills" />
+            {featuredJobs[0] && <div className="home-feature-card"><div><span className="field-kicker">Featured role</span><h2>{featuredJobs[0].title}</h2><p>{featuredJobs[0].company} · {featuredJobs[0].location}</p></div><Link to={`/jobs/${featuredJobs[0].id}`} className="button button-secondary">View role <ArrowUpRight size={15} /></Link></div>}
 
             <section className="section-panel">
                 <div className="section-heading">
-                    <div>
-                        <h2>Featured jobs</h2>
-                        <p>Handpicked opportunities for trending roles and top companies.</p>
-                    </div>
+                    <div><span className="field-kicker">Start here</span><h2>Featured jobs</h2><p>Review a small set of current opportunities.</p></div>
                 </div>
                 <JobList
                     jobs={featuredJobs}
@@ -157,13 +99,8 @@ function Home({ savedJobs, onToggleSave }: HomeProps) {
 
             <section className="section-panel">
                 <div className="section-heading">
-                    <div>
-                        <h2>Recent jobs</h2>
-                        <p>Newest postings from across our platform.</p>
-                    </div>
-                    <Link to="/jobs" className="button button-tertiary">
-                        View All Jobs
-                    </Link>
+                    <div><span className="field-kicker">Latest entries</span><h2>Recent jobs</h2><p>Newest postings from the current job feed.</p></div>
+                    <Link to="/jobs" className="button button-quiet">View all jobs <ArrowUpRight size={15} /></Link>
                 </div>
                 <JobList
                     jobs={searchText ? searchResults.slice(0, 5) : recentJobs}

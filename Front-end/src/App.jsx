@@ -6,6 +6,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingChatButton from './components/FloatingChatButton';
+import MobileBottomNav from './components/MobileBottomNav';
+import { API_BASE, safeJson } from './utils/api';
 
 // ─── Pages ──────────────────────────────────────────────────
 import Home from './pages/Home';
@@ -29,16 +31,20 @@ import Recommendations from './pages/Recommendations';
 // ─── Styles ──────────────────────────────────────────────────
 import './App.css';
 
-// ─── API Base URL ───────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_URL || '';
-
 function App() {
   const navigate = useNavigate();
 
   // ─── User State ──────────────────────────────────────────
   const [user, setUser] = useState(() => {
     const storedUser = window.localStorage.getItem('jobscout-user');
-    return storedUser ? JSON.parse(storedUser) : null;
+    if (!storedUser) return null;
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      window.localStorage.removeItem('jobscout-user');
+      return null;
+    }
   });
 
   const [token, setToken] = useState(() =>
@@ -76,8 +82,8 @@ function App() {
         });
 
         if (savedResponse.ok) {
-          const savedData = await savedResponse.json();
-          setSavedJobs(savedData.map((job) => job.id));
+          const savedData = await safeJson(savedResponse, []);
+          setSavedJobs(Array.isArray(savedData) ? savedData.map((job) => job.id) : []);
         } else if (savedResponse.status === 401) {
           handleLogout();
           return;
@@ -92,8 +98,8 @@ function App() {
         });
 
         if (historyResponse.ok) {
-          const historyData = await historyResponse.json();
-          setApplications(historyData);
+          const historyData = await safeJson(historyResponse, []);
+          setApplications(Array.isArray(historyData) ? historyData : []);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -136,7 +142,7 @@ function App() {
         throw new Error('Failed to toggle saved job');
       }
 
-      const data = await response.json();
+      const data = await safeJson(response, {});
 
       if (data.saved) {
         setSavedJobs((prev) => [...prev, jobId]);
@@ -345,8 +351,8 @@ function App() {
       </main>
 
       <Footer />
+      <MobileBottomNav user={user} savedCount={savedJobs.length} />
 
-      {/* ✅ AI Chat Floating Button */}
       <FloatingChatButton />
     </div>
   );
