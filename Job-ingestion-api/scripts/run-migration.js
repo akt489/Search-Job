@@ -1,12 +1,31 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pool, withTransaction } from '../src/config/database.js';
-import { assertProductionConfig } from '../src/config/env.js';
+import pg from 'pg';
+import 'dotenv/config';
 
-assertProductionConfig();
+const { Pool } = pg;
+const connectionString = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
+if (!connectionString) throw new Error('Missing DATABASE_URL or DIRECT_DATABASE_URL');
+
+const migrationPool = new Pool({
+    connectionString,
+    ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
+});
+
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const migration = await fs.readFile(path.join(directory, '..', 'migrations', '001_add_ingestion_fields.sql'), 'utf8');
-await withTransaction((client) => client.query(migration));
-await pool.end();
-console.log('Applied 001_add_ingestion_fields.sql');
+
+const client = await migrationPool.connect();
+try {
+    await client.query('BEGIN');
+    await client.query(migration);
+    await client.query('COMMIT');
+    console.log('Applied 001_add_ingestion_fields.sql');
+} catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+} finally {
+    client.release();
+    await migrationPool.end();
+}
