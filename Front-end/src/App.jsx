@@ -58,7 +58,7 @@ function App() {
   // ─── Theme State ─────────────────────────────────────────
   const [theme, setTheme] = useState(() => {
     const stored = window.localStorage.getItem('jobscout-theme');
-    return stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    return stored || 'dark';
   });
 
   // ─── Fetch User Data on Login ────────────────────────────
