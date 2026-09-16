@@ -1,0 +1,89 @@
+Fix "inconsistent types deduced for parameter $1" in the enricher
+Context:
+Job-enricher is a Node.js ESM worker that updates rows in a Postgres jobs table. Grants are correct. But running npm start fails with:
+
+text
+{"level":50,"event":"job_enrichment_failed","jobId":14,
+ "error":"inconsistent types deduced for parameter $1",
+ "msg":"Job enrichment failed"}
+
+{"level":50,"event":"job_failure_update_failed","jobId":14,
+ "error":"inconsistent types deduced for parameter $1",
+ "msg":"Could not mark job failed"}
+The worker stops after this error.
+
+What I need you to do:
+
+Read the update SQL. Look in src/worker.js, src/db/*.js, or wherever UPDATE jobs SET appears. Find:
+
+The enrichment result update (sets title, title_en, company, location, salary, category, type, experience_level, deadline, application_url, requirements, description_en, enrichment_status, enriched_at, ai_model)
+
+The failure update (sets enrichment_status='failed', enrichment_error, enriched_at)
+
+Identify why Postgres reports inconsistent types deduced for parameter $1. This error means the same $N placeholder is used in two contexts that imply different types. Common causes:
+
+$1 used as both text and jsonb (e.g., for requirements)
+
+$1 used with COALESCE/NULLIF where Postgres can't infer type
+
+Parameter array order doesn't match placeholder positions
+
+JSONB column receiving a value without a cast
+
+Fix the SQL by doing all of the following:
+
+Add explicit type casts to every parameter: $1::text, $5::jsonb, $3::timestamptz, etc.
+
+For JSONB columns (specifically requirements), always cast: $N::jsonb. The driver sends JS objects/arrays as text; without the cast Postgres can't decide.
+
+For nullable text fields, use NULLIF($N::text, '') to convert empty strings to NULL.
+
+Never reuse a parameter index across different column types. Each $N maps to exactly one value in the array, used in exactly one type context.
+
+Fix the job-selection query so it never picks jobs that have no source text:
+
+Change LEFT JOIN job_sources to INNER JOIN job_sources so only jobs with at least one source row are claimed.
+
+This prevents the worker from trying to enrich seed/test jobs (like jobId: 14) that have no raw_text — those were what triggered the failure.
+
+After fixing, run these checks and report output:
+
+powershell
+cd Job-enricher
+npm run lint
+npm test
+Then run the worker for ~90 seconds against real data:
+
+powershell
+npm start
+Expected: jobs claimed, enriched, no inconsistent types errors. Stop with Ctrl+C after 90 seconds.
+
+Verify in the database:
+
+powershell
+node --input-type=module -e "import 'dotenv/config'; import pg from 'pg'; const pool = new pg.Pool({ connectionString: process.env.DIRECT_DATABASE_URL, ssl: { rejectUnauthorized: false } }); const s = await pool.query('SELECT enrichment_status, COUNT(*) FROM jobs GROUP BY enrichment_status'); const sample = await pool.query(\"SELECT id, LEFT(title,30) title, LEFT(title_en,30) title_en, company, enrichment_status FROM jobs WHERE enrichment_status = 'done' ORDER BY id DESC LIMIT 5\"); console.log('STATUS:', JSON.stringify(s.rows)); console.log('SAMPLE:', JSON.stringify(sample.rows, null, 2)); await pool.end();"
+Constraints:
+
+Do NOT modify grants or SQL roles
+
+Do NOT touch .env
+
+Do NOT modify the ingestion API, collector, or Search-Job backend
+
+Keep changes minimal — this is a bug fix, not a refactor
+
+Do NOT commit or push
+
+Deliverable:
+
+Root cause (one sentence — which parameter was ambiguous and why)
+
+Files changed
+
+Diff of the SQL changes
+
+Output of npm run lint and npm test
+
+First 20 lines of npm start output (should show successful enrichments, no inconsistent types error)
+
+Output of the verification query (status distribution + 5 sample enriched jobs)
